@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Home Weather Station</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"
+    integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj"
+    crossorigin="anonymous"></script>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="../static/style.css">
+
+  <script type="text/javascript" src="../static/weather.js"></script>
+</head>
+
+
+<body style="background-color:black;">
+
+  <h1 align="center" style="color: white;">Home Weather Station</h1>
+
+  <div class="cards">
+    <div class="card" id="indoor_css">
+      <img class="card__image" src="../static/java1.jpg" alt="">
+      <div class="card__content">
+        <table>
+          <tbody>
+            <tr>
+              <td>Temp:</td>
+              <td id="indoorTemp">--</td>
+            </tr>
+            <tr>
+              <td>Humidity:</td>
+              <td id="indoorHumidity">--</td>
+            </tr>
+
+            <tr>
+              <td>Battery:</td>
+              <td id="indoorBattery">--</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card__info">
+        <h2 class="headercenter">Indoor Weather</h2>
+      </div>
+    </div>
+    <div class="card" id="outdoor_css">
+      <img class="card__image" src="../static/java2.jpg" alt="">
+      <div class="card__content">
+        <table>
+          <tbody>
+            <tr>
+              <td>Temp:</td>
+              <td id="outdoorTemp">--</td>
+            </tr>
+            <tr>
+              <td>Humidity:</td>
+              <td id="outdoorHumidity">--</td>
+            </tr>
+            <tr>
+              <td>Wind Direction:</td>
+              <td id="outdoorWinddirection">--</td>
+            </tr>
+            <tr>
+            <tr>
+              <td>Windspeed (avg):</td>
+              <td id="outdoorWindspeed">--</td>
+            </tr>
+            <tr>
+              <td>Windspeed (gust):</td>
+              <td id="outdoorWindGustspeed">--</td>
+            </tr>
+            <tr>
+              <td>Rain (cumulative):</td>
+              <td id="outdoorRain">--</td>
+            </tr>
+            <tr>
+              <td>Light:</td>
+              <td id="outdoorLight">--</td>
+            </tr>
+            <tr>
+              <td>UV:</td>
+              <td id="outdoorUV">--</td>
+            <tr>
+              <td>Battery:</td>
+              <td id="outdoorBattery">--</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+      <div class="card__info">
+        <h2 class="headercenter">Outdoor Weather</h2>
+      </div>
+    </div>
+    <div class="card" id="garage_css">
+      <img class="card__image" src="../static/java3.jpg" alt="">
+      <div class="card__content">
+        <table>
+          <tbody>
+            <tr>
+              <td>Door Status:</td>
+              <td id="doorStatus">--</td>
+            </tr>
+            {% if (showDoor) %}
+            <tr>
+              <td><img src="https://media.giphy.com/media/3o6Zta5ZuDgkZTsOWY/giphy.gif" style="width: 48px; height: 48px;"></td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td>Door Button:</td>
+              <td><input type="button" id="doorButton" style="background-color: rgb(109, 162, 223);" value="Open/Close"
+                  onclick="moveDoor()"></td>
+            </tr>
+            <tr>
+              <td>Battery:</td>
+              <td id="doorBattery">--</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+      <div class="card__info">
+        <h2 class="headercenter">Garage Door</h2>
+      </div>
+    </div>
+
+</body>
+
+</html>

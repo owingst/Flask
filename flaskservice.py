@@ -29,11 +29,6 @@ import socket
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
 socketio = SocketIO(app,logger=True, engineio_logger=True)
-#path = os.getcwd()
-# logFormatStr = '%(asctime)s  %(levelname)s - %(message)s'
-# logging.basicConfig(filename=path + '\flask.log', format=logFormatStr, level=logging.DEBUG), logging.info('default message')
-# logger = logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
 
 RELAY_CH1 = 26
 CONNECTED = False
@@ -165,29 +160,7 @@ def moveDoor():
         return "moveDoor Request Processed Successfully"
 
     except Exception as e:
-        logStatus("Exception in moveDoor {}\n".format(e))        
-
-
-# @app.route('/getSensorData', methods=['GET'])
-# def getSensorData():
-#     """ API to get latest temperature/humidity/door status """
-
-#     try:
-
-#         ds = getDscData()
-#         logStatus("getDscData returned {}\n".format(ds)) 
-                       
-#         ws = getWeathersenseData()
-#         logStatus("getWeathersenseData returned {}\n".format(ws)) 
-        
-#         ts = getF007thData()
-#         logStatus("getF007thData returned {}\n".format(ts)) 
-
-#         return jsonify(dsData = ds, wsData = ws, tsData = ts)
-
-#     except Exception as e:
-
-#             logStatus("Exception in getSensorData {}\n".format(e))      
+        logStatus("Exception in moveDoor {}\n".format(e))         
                        
             
 @app.route('/getWeathersenseData', methods=['GET'])              
@@ -456,9 +429,6 @@ except Exception as e:
 
 if __name__ == '__main__':
 
-    # hostname = socket.gethostname()
-    # local_ip = socket.gethostbyname(hostname)
-    # logStatus("Flask App IP is {}\n".format(local_ip))
     socketio.run(host="192.168.1.74", port=5000, threaded=False, debug=True)
 
     

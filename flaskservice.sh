@@ -8,7 +8,5 @@
 #Email         	:  owingst@gmail.com                                           
 ###################################################################
 export FLASK_DEBUG=true
-#export FLASK_ENV=development
 export FLASK_APP=/home/pi/flask/flaskservice.py 
 flask run --host="192.168.1.74" --port=5000
-#python3 flaskservice.py

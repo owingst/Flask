@@ -25,6 +25,7 @@ from flask_socketio import SocketIO, emit
 import paho.mqtt.client as mqtt
 import utilities
 import socket 
+import prctl
 # =============================================================================
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
@@ -414,7 +415,8 @@ def index():
 
 
 try:
-    logStatus("In main initstuff...\n")
+    # logStatus("In main initstuff...\n")
+    prctl.set_name("flaskservice")
     utility = utilities.Utility()
     CFG = utility.getCFG()
     client = mqtt.Client()

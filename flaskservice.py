@@ -91,6 +91,38 @@ def getLogs():
     return jsonify(lines)
 
 
+@app.route('/insertPMTValues', methods=['POST'])
+def insertPMTValues():
+    """insertPMTValues """    
+    
+    conn = None
+    global CFG
+    global utility
+
+    try:
+          pm10 = request.args.get('pm10')
+          pm25 = request.args.get('pm25')
+          aqi10 = request.args.get('aqi10')
+          aqi25 = request.args.get('aqi25')
+          logStatus("pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
+          args = (pm25, pm10, aqi25, aqi10)
+          sql = "INSERT INTO pmt(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
+          conn = utility.getConnection(CFG.database_path)
+          conn.execute(sql, args)
+            
+          conn.commit()
+
+          return "OK"
+
+    except Exception as e:
+        logStatus("Exception in insertPMTValues {}\n".format(e))
+        return "insertPMTValues Failed!"
+
+    finally:
+        if conn is not None:
+            conn.close() 
+
+
 @app.route('/registerDeviceToken', methods=['GET'])
 def registerDeviceToken():
     """registerDeviceToken """    
@@ -344,7 +376,57 @@ def getDscData():
 
         if conn is not None:
             conn.close()
+
                    
+@app.route('/getPMTData', methods=['GET']) 
+def getPMTData():
+    """ getPMTData """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    arr = []
+
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt ORDER BY ts DESC LIMIT 10"
+
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql)
+        rows = cur.fetchall()
+        rowcnt = len(rows)
+
+        if rows:
+
+                for row in rows:
+
+                    ts = row[0]
+                    pm25 = row[1]
+                    pm10 = row[2]
+                    aqi25 = row[3]
+                    aqi10 = row[4]
+
+                    jsonObj = json.dumps({'ts':ts, 'pm25': pm25, 'pm10': pm10, 'aqi25': aqi25, 'aqi10': aqi10})
+                    arr.append(jsonObj) 
+                jsonArr = json.dumps(arr)
+                return jsonArr
+        else:
+
+             rc = "getPMTData failed"
+             return rc
+
+    except Exception as e: 
+        logStatus("Exception in getPMTData {}\n".format(e)) 
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
 
 @app.route('/getRainfall', methods=['GET']) 
 def getRainfall():

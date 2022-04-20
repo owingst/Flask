@@ -5,7 +5,7 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-01-23 14:38:35
+ * Last modified  : 2022-04-19 11:08:58
  */
 
 
@@ -52,6 +52,19 @@ function fetchWeatherData() {
   });
 }
 
+function fetchSDSData() {
+  
+  fetch("http://192.168.1.74:5000/getPMTData")
+  .then(function (response) {
+      return response.json();
+  }).then(function (text) {
+    document.getElementById("pm25").innerHTML = text['pm25'];
+    document.getElementById("pm10").innerHTML = text['pm10'];
+    document.getElementById("aqi25").innerHTML = text['aqi25'];
+    document.getElementById("aqi10").innerHTML = text['aqi10'];
+  });
+}
+
 function moveDoor() {
   fetch("http://192.168.1.74:5000/moveDoor")
 }
@@ -82,6 +95,7 @@ $(document).ready(function () {
   fetchDscData();
   fetchF007Data();
   fetchWeatherData();
+  fetchSDSData();
 
   var socket = io.connect("http://192.168.1.74:5000");
 
@@ -94,18 +108,19 @@ $(document).ready(function () {
 
   socket.on("new data", function (msg) {
 
-    var showDoor = false
-    document.getElementById("msgArrived").innerHTML = msg.type;
+    //document.getElementById("msgArrived").innerHTML = msg.type;
+    console.log("msg arrived: ", msg);
     if (msg.type == "DSC") {
       ds = msg;
       document.getElementById("doorStatus").innerHTML = (ds.status === 1) ? "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
       document.getElementById("doorBattery").innerHTML = (ds.battery === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
-      if (ds.doorOpen != null) {
-        console.log("doorOpen is " + ds.doorOpen);
-        if (ds.doorOpen === "True") {
-          showDoor = true
-        }
-      }
+    } else if (msg.type == "SDS") {
+      sd = msg;
+      document.getElementById("pm25").innerHTML = sd.pm25;
+      document.getElementById("pm10").innerHTML = sd.pm10;
+      document.getElementById("aqi25").innerHTML = sd.aqi25;
+      document.getElementById("aqi10").innerHTML = sd.aqi10;
+
     } else if (msg.type == "F007th") {
       ts = msg;
       document.getElementById("indoorTemp").innerHTML = ts.temperature;

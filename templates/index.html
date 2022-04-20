@@ -10,8 +10,8 @@
   <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"
     integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj"
     crossorigin="anonymous"></script>
-  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <link rel="stylesheet" href="../static/style.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="stylesheet" href="../static/style.css">
 
   <script type="text/javascript" src="../static/weather.js"></script>
 </head>
@@ -35,11 +35,26 @@
               <td>Humidity:</td>
               <td id="indoorHumidity">--</td>
             </tr>
-
             <tr>
               <td>Battery:</td>
               <td id="indoorBattery">--</td>
             </tr>
+            <tr>
+              <td>PM25:</td>
+              <td id="pm25">--</td>
+            </tr>
+            <tr>
+              <td>PM10:</td>
+              <td id="pm10">--</td>
+            </tr>
+            <tr>
+              <td>AQI25:</td>
+              <td id="aqi25">--</td>
+            </tr>       
+            <tr>
+              <td>AQI10:</td>
+              <td id="aqi10">--</td>
+            </tr>                  
           </tbody>
         </table>
       </div>

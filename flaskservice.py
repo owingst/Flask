@@ -41,16 +41,20 @@ def test_connect():
     logStatus("Client Connected\n")
     emit("my response", {"data": "Connected"})
 
+
 @socketio.on("disconnect")
 def test_disconnect():
     logStatus("Client disconnected\n")
+
     
 @socketio.on('message')
 def handle_message(data):
     logStatus('received message: ' + data)
 
+
 def sendData(data):
     socketio.emit('new data', data, broadcast=True)
+    
 
 def logStatus(msg):
     """ Function to write logs to a file. Never could get Flask logging to a file to work.... """
@@ -104,7 +108,7 @@ def insertPMTValues():
           pm25 = request.args.get('pm25')
           aqi10 = request.args.get('aqi10')
           aqi25 = request.args.get('aqi25')
-          logStatus("pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
+          logStatus("insertPMTValues: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
           args = (pm25, pm10, aqi25, aqi10)
           sql = "INSERT INTO pmt(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
           conn = utility.getConnection(CFG.database_path)
@@ -386,35 +390,47 @@ def getPMTData():
     global utility
     conn = None
     cur = None
-    arr = []
-
-    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt ORDER BY ts DESC LIMIT 10"
+    
+    sql = "SELECT datetime(max(ts), 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt"
 
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
         cur.execute(sql)
-        rows = cur.fetchall()
-        rowcnt = len(rows)
+        row = cur.fetchone()
 
-        if rows:
+        if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
 
-                for row in rows:
+            sd = datastruct.SDS011Struct()
+            sd.type = "SDS"
+            sd.pm25 = 9
+            sd.pm10 = 9
+            sd.aqi25 = 9
+            sd.aqi10 = 9
 
-                    ts = row[0]
-                    pm25 = row[1]
-                    pm10 = row[2]
-                    aqi25 = row[3]
-                    aqi10 = row[4]
-
-                    jsonObj = json.dumps({'ts':ts, 'pm25': pm25, 'pm10': pm10, 'aqi25': aqi25, 'aqi10': aqi10})
-                    arr.append(jsonObj) 
-                jsonArr = json.dumps(arr)
-                return jsonArr
+            logStatus("getPMTData No data returned\n")
+            if 'internal' in session:
+                rc = sd
+            else:   
+                jsonObj = json.dumps(sd.__dict__)
+                rc = jsonObj
         else:
 
-             rc = "getPMTData failed"
-             return rc
+            sd = datastruct.SDS011Struct()
+            sd.type = "SDS"
+            sd.pm25 = row[1]
+            sd.pm10 = row[2]
+            sd.aqi25 = row[3]
+            sd.aqi10 = row[4]
+ 
+            logStatus("getPMTData Processed Successfully\n")
+            if 'internal' in session:
+                rc = sd
+            else:   
+                jsonObj = json.dumps(sd.__dict__)
+                rc = jsonObj
+
+        return rc        
 
     except Exception as e: 
         logStatus("Exception in getPMTData {}\n".format(e)) 

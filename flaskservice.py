@@ -25,6 +25,7 @@ from flask_socketio import SocketIO, emit
 import paho.mqtt.client as mqtt
 import utilities
 import socket 
+import sqlite3
 import prctl
 # =============================================================================
 app = Flask(__name__)
@@ -381,7 +382,6 @@ def getDscData():
         if conn is not None:
             conn.close()
 
-                   
 @app.route('/getPMTData', methods=['GET']) 
 def getPMTData():
     """ getPMTData """    
@@ -403,6 +403,7 @@ def getPMTData():
 
             sd = datastruct.SDS011Struct()
             sd.type = "SDS"
+            sd.ts = row[0]
             sd.pm25 = 9
             sd.pm10 = 9
             sd.aqi25 = 9
@@ -418,6 +419,7 @@ def getPMTData():
 
             sd = datastruct.SDS011Struct()
             sd.type = "SDS"
+            sd.ts = row[0]
             sd.pm25 = row[1]
             sd.pm10 = row[2]
             sd.aqi25 = row[3]
@@ -439,6 +441,83 @@ def getPMTData():
     finally:
         if cur is not None:
             cur.close()
+
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/getPMTXData/<rowcnt>', methods=['GET']) 
+def getPMTXData(rowcnt):
+    """ getPMTXData """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    arr = []
+    
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt order by ts asc LIMIT ?"
+
+    try:
+
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, (rowcnt,))
+        rows = cur.fetchall()
+        cnt = len(rows)
+
+        if (rows):
+            for row in rows:
+
+                if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
+
+                    sd = datastruct.SDS011Struct()
+                    sd.type = "SDS"
+                    sd.ts = 9
+                    sd.pm25 = 9
+                    sd.pm10 = 9
+                    sd.aqi25 = 9
+                    sd.aqi10 = 9
+
+                    logStatus("getPMTData No data returned\n")
+                    if 'internal' in session:
+                        arr.append(sd)
+                    else:   
+                        jsonObj = json.dumps(sd.__dict__)
+                        arr.append(jsonObj)
+
+                else:
+
+                    sd = datastruct.SDS011Struct()
+                    sd.type = "SDS"
+                    sd.ts = row[0]
+                    sd.pm25 = row[1]
+                    sd.pm10 = row[2]
+                    sd.aqi25 = row[3]
+                    sd.aqi10 = row[4]
+        
+                    logStatus("getXPMTData Processed Successfully\n")
+                    if 'internal' in session:
+                        arr.append(sd)
+                    else:   
+                        jsonObj = json.dumps(sd.__dict__)
+                        arr.append(jsonObj)
+
+            logStatus("getXPMTData: arr is {}\n".format(arr))
+            jsonArr = json.dumps(arr)
+            logStatus("getPMTData: jsonArr is {}\n".format(jsonArr))
+            return jsonArr   
+        else:
+             logStatus("getXPMTData No rows returned\n")   
+
+    except Exception as e: 
+        logStatus("Exception in getXPMTData {}\n".format(e)) 
+        return e
+
+    finally:
+
+        if cur is not None:
+           cur.close()
 
         if conn is not None:
             conn.close()

@@ -446,6 +446,85 @@ def getPMTData():
             conn.close()
 
 
+@app.route('/getPMTDataByDate', methods=['GET']) 
+def getPMTDataByDate():
+    """ getPMTDataByDate """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    arr = []
+    
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+
+    start = request.args.get('start')
+    end = request.args.get('end')
+    args = (start, end)
+    logStatus("getPMTDataByDate: start {} and end {} dates: \n".format(start, end)) 
+    
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        if (rows):
+            for row in rows:
+
+                if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
+
+                    sd = datastruct.SDS011Struct()
+                    sd.type = "SDS"
+                    sd.ts = 9
+                    sd.pm25 = 9
+                    sd.pm10 = 9
+                    sd.aqi25 = 9
+                    sd.aqi10 = 9
+
+                    logStatus("getPMTDataByDate No data returned\n")
+                    if 'internal' in session:
+                        arr.append(sd)
+                    else:   
+                        jsonObj = json.dumps(sd.__dict__)
+                        arr.append(jsonObj)
+
+                else:
+
+                    sd = datastruct.SDS011Struct()
+                    sd.type = "SDS"
+                    sd.ts = row[0]
+                    sd.pm25 = row[1]
+                    sd.pm10 = row[2]
+                    sd.aqi25 = row[3]
+                    sd.aqi10 = row[4]
+        
+                    logStatus("getPMTDataByDate Processed Successfully\n")
+                    if 'internal' in session:
+                        arr.append(sd)
+                    else:   
+                        jsonObj = json.dumps(sd.__dict__)
+                        arr.append(jsonObj)
+
+            logStatus("getPMTDataByDate: arr is {}\n".format(arr))
+            jsonArr = json.dumps(arr)
+            logStatus("getPMTDataByDate: jsonArr is {}\n".format(jsonArr))
+            return jsonArr   
+        else:
+             logStatus("getPMTDataByDate No rows returned\n")        
+
+    except Exception as e: 
+        logStatus("Exception in getPMTDataByDate {}\n".format(e)) 
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
+
 @app.route('/getPMTXData/<rowcnt>', methods=['GET']) 
 def getPMTXData(rowcnt):
     """ getPMTXData """    

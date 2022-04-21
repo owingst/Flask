@@ -506,9 +506,7 @@ def getPMTDataByDate():
                         jsonObj = json.dumps(sd.__dict__)
                         arr.append(jsonObj)
 
-            logStatus("getPMTDataByDate: arr is {}\n".format(arr))
             jsonArr = json.dumps(arr)
-            logStatus("getPMTDataByDate: jsonArr is {}\n".format(jsonArr))
             return jsonArr   
         else:
              logStatus("getPMTDataByDate No rows returned\n")        

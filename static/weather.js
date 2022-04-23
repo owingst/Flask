@@ -5,7 +5,7 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-04-19 11:08:58
+ * Last modified  : 2022-04-21 13:46:15
  */
 
 
@@ -107,7 +107,7 @@ $(document).ready(function () {
   });
 
   socket.on("new data", function (msg) {
-
+    
     //document.getElementById("msgArrived").innerHTML = msg.type;
     console.log("msg arrived: ", msg);
     if (msg.type == "DSC") {

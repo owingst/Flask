@@ -26,6 +26,7 @@ import paho.mqtt.client as mqtt
 import utilities
 import socket 
 import sqlite3
+from matplotlib import pyplot as plt
 import prctl
 # =============================================================================
 app = Flask(__name__)
@@ -382,9 +383,10 @@ def getDscData():
         if conn is not None:
             conn.close()
 
+
 @app.route('/getPMTData', methods=['GET']) 
 def getPMTData():
-    """ getPMTData """    
+    """ getPMTData - gets latest row"""    
         
     global CFG    
     global utility
@@ -475,7 +477,7 @@ def getPMTDataByDate():
                 if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
 
                     sd = datastruct.SDS011Struct()
-                    sd.type = "SDS"
+                    #sd.type = "SDS"
                     sd.ts = 9
                     sd.pm25 = 9
                     sd.pm10 = 9
@@ -492,7 +494,7 @@ def getPMTDataByDate():
                 else:
 
                     sd = datastruct.SDS011Struct()
-                    sd.type = "SDS"
+                    #sd.type = "SDS"
                     sd.ts = row[0]
                     sd.pm25 = row[1]
                     sd.pm10 = row[2]
@@ -598,6 +600,7 @@ def getPMTXData(rowcnt):
 
         if conn is not None:
             conn.close()
+
 
 
 @app.route('/getRainfall', methods=['GET']) 

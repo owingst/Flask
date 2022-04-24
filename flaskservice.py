@@ -12,6 +12,7 @@ import datetime
 import os
 import sys
 import time
+import io
 import RPi.GPIO as GPIO
 sys.path.append("/home/pi/sdr/")
 import datastruct
@@ -21,6 +22,7 @@ from flask import jsonify
 from flask import render_template
 from flask import request
 from flask import session
+from flask import send_file
 from flask_socketio import SocketIO, emit
 import paho.mqtt.client as mqtt
 import utilities
@@ -535,6 +537,11 @@ def getPMTPlotByDate():
     conn = None
     cur = None
     arr = []
+    ts = []
+    pm25 = []
+    pm10 = []
+    aqi25 = []
+    aqi10 = []
     
     sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
 
@@ -549,13 +556,8 @@ def getPMTPlotByDate():
         cur.execute(sql, args)
         rows = cur.fetchall()
 
-        logStatus("getPMTPlotByDate: data returned {}\n".format(rows)) 
-        
-        ts = []
-        pm25 = []
-        pm10 = []
-        aqi25 = []
-        aqi10 = []
+        logStatus("getPMTPlotByDate: data returned {}\n".format(rows))
+
         if (rows):
             for row in rows:
      
@@ -569,10 +571,12 @@ def getPMTPlotByDate():
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
 
-        plt.plot(ts, pm25,'b', label='PM25', linewidth=2)
-        plt.plot(ts, pm10,'b', label='PM10', linewidth=2)
-        plt.plot(ts, aqi25,'b', label='aqi25', linewidth=2)
-        plt.plot(ts, aqi10,'b', label='aqi10', linewidth=2)
+        plt.plot(ts, pm25, 'r', label='PM25', linewidth=2)
+        plt.plot(ts, pm10, 'b', label='PM10', linewidth=2)
+        plt.plot(ts, aqi25,'g', label='aqi25', linewidth=2)
+        plt.plot(ts, aqi10,'y', label='aqi10', linewidth=2)
+
+        plt.legend(loc="upper left")
 
         #plt.grid(False,color='k')
         #plt.show()
@@ -580,9 +584,10 @@ def getPMTPlotByDate():
         bytes_image = io.BytesIO()
         plt.savefig(bytes_image, format='png')
         bytes_image.seek(0)
-        #plt.savefig('/home/pi/sds011/python-aqi-0.6.1/myplot.png')
+        #plt.savefig('/home/pi/flask/plot.png')
         plt.close()
-        #return bytes_image
+        return send_file(bytes_image, mimetype='image/png')
+
     except Exception as e: 
         logStatus("Exception in getPMTDataByDate {}\n".format(e)) 
         return e

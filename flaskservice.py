@@ -525,6 +525,77 @@ def getPMTDataByDate():
             conn.close()
 
 
+
+@app.route('/getPMTPlotByDate', methods=['GET']) 
+def getPMTPlotByDate():
+    """ getPMTPlotByDate """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    arr = []
+    
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+
+    start = request.args.get('start')
+    end = request.args.get('end')
+    args = (start, end)
+    logStatus("getPMTPlotByDate: start {} and end {} dates: \n".format(start, end)) 
+    
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        logStatus("getPMTPlotByDate: data returned {}\n".format(rows)) 
+        
+        ts = []
+        pm25 = []
+        pm10 = []
+        aqi25 = []
+        aqi10 = []
+        if (rows):
+            for row in rows:
+     
+                ts.append(datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S'))
+                pm25.append(row[1])
+                pm10.append(row[2])
+                aqi25.append(row[3])
+                aqi10.append(row[4])
+
+        plt.title('PMT Data')
+        plt.ylabel('Y axis')
+        plt.xlabel('X axis')
+
+        plt.plot(ts, pm25,'b', label='PM25', linewidth=2)
+        plt.plot(ts, pm10,'b', label='PM10', linewidth=2)
+        plt.plot(ts, aqi25,'b', label='aqi25', linewidth=2)
+        plt.plot(ts, aqi10,'b', label='aqi10', linewidth=2)
+
+        #plt.grid(False,color='k')
+        #plt.show()
+
+        bytes_image = io.BytesIO()
+        plt.savefig(bytes_image, format='png')
+        bytes_image.seek(0)
+        #plt.savefig('/home/pi/sds011/python-aqi-0.6.1/myplot.png')
+        plt.close()
+        #return bytes_image
+    except Exception as e: 
+        logStatus("Exception in getPMTDataByDate {}\n".format(e)) 
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
+
+
 @app.route('/getPMTXData/<rowcnt>', methods=['GET']) 
 def getPMTXData(rowcnt):
     """ getPMTXData """    

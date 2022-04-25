@@ -29,6 +29,7 @@ import utilities
 import socket 
 import sqlite3
 from matplotlib import pyplot as plt
+#import matlab.engine
 import prctl
 # =============================================================================
 app = Flask(__name__)
@@ -548,7 +549,7 @@ def getPMTPlotByDate():
     start = request.args.get('start')
     end = request.args.get('end')
     args = (start, end)
-    logStatus("getPMTPlotByDate: start {} and end {} dates: \n".format(start, end)) 
+    #logStatus("getPMTPlotByDate: start {} and end {} dates: \n".format(start, end)) 
     
     try:
         conn = utility.getConnection(CFG.database_path)
@@ -556,28 +557,29 @@ def getPMTPlotByDate():
         cur.execute(sql, args)
         rows = cur.fetchall()
 
-        logStatus("getPMTPlotByDate: data returned {}\n".format(rows))
+        #logStatus("getPMTPlotByDate: data returned {}\n".format(rows))
 
         if (rows):
             for row in rows:
      
-                ts.append(datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S'))
+                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+                #logStatus("getPMTPlotByDate: dt is {}\n".format(dt))
+                ts.append(dt)
                 pm25.append(row[1])
                 pm10.append(row[2])
-                aqi25.append(row[3])
-                aqi10.append(row[4])
-
+                # aqi25.append(row[3])
+                # aqi10.append(row[4])
+        
         plt.title('PMT Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
 
         plt.plot(ts, pm25, 'r', label='PM25', linewidth=2)
         plt.plot(ts, pm10, 'b', label='PM10', linewidth=2)
-        plt.plot(ts, aqi25,'g', label='aqi25', linewidth=2)
-        plt.plot(ts, aqi10,'y', label='aqi10', linewidth=2)
-
-        plt.legend(loc="upper left")
-
+        # plt.plot(ts, aqi25,'g', label='aqi25', linewidth=2)
+        # plt.plot(ts, aqi10,'y', label='aqi10', linewidth=2)
+        plt.legend(loc="upper right")
+        plt.xticks(rotation=90)
         #plt.grid(False,color='k')
         #plt.show()
 
@@ -598,7 +600,6 @@ def getPMTPlotByDate():
 
         if conn is not None:
             conn.close()
-
 
 
 @app.route('/getPMTXData/<rowcnt>', methods=['GET']) 
@@ -678,7 +679,6 @@ def getPMTXData(rowcnt):
             conn.close()
 
 
-
 @app.route('/getRainfall', methods=['GET']) 
 def getRainfall():
     """ getRainfall """    
@@ -727,6 +727,7 @@ def ping(value):
     """ API to test if server is up """
     
     return value
+
 
 @app.route('/getConfig', methods=['GET'])
 def getConfig():

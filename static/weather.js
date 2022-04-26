@@ -5,9 +5,18 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-04-21 13:46:15
+ * Last modified  : 2022-04-26 14:22:41
  */
 
+ function fetchPMTData() {
+  fetch("http://192.168.1.74:5000/getPMTPlotLast24")
+  .then(function (response) {
+      return response.content()
+  }).then(function (text) {
+      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
+      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+  });
+}
 
 function fetchDscData() {
   fetch("http://192.168.1.74:5000/getDscData")
@@ -96,6 +105,7 @@ $(document).ready(function () {
   fetchF007Data();
   fetchWeatherData();
   fetchSDSData();
+  fetchPMTData();
 
   var socket = io.connect("http://192.168.1.74:5000");
 

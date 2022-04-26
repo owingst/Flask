@@ -13,6 +13,7 @@ import os
 import sys
 import time
 import io
+from xmlrpc.client import DateTime
 import RPi.GPIO as GPIO
 sys.path.append("/home/pi/sdr/")
 import datastruct
@@ -528,6 +529,69 @@ def getPMTDataByDate():
             conn.close()
 
 
+@app.route('/getPMTPlotLast24', methods=['GET']) 
+def getPMTPlotLast24():
+    """ getPMTPlotLast24 """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    arr = []
+    ts = []
+    pm25 = []
+    pm10 = []
+    aqi25 = []
+    aqi10 = []
+    
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+
+
+    end = datetime.datetime.now()
+    start = end - datetime.timedelta(hours = 24)
+    args = (start, end)
+    
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        if (rows):
+            for row in rows:
+     
+                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+                ts.append(dt)
+                pm25.append(row[1])
+                pm10.append(row[2])
+        
+        plt.title('PMT Data')
+        plt.ylabel('Y axis')
+        plt.xlabel('X axis')
+
+        plt.plot(ts, pm25, 'r', label='PM25', linewidth=2)
+        plt.plot(ts, pm10, 'b', label='PM10', linewidth=2)
+        plt.legend(loc="upper right")
+        plt.xticks(rotation=90)
+
+        bytes_image = io.BytesIO()
+        plt.savefig(bytes_image, format='png')
+        bytes_image.seek(0)
+        #plt.savefig('/home/pi/flask/plot.png')
+        plt.close()
+        return send_file(bytes_image, mimetype='image/png')
+
+    except Exception as e: 
+        logStatus("Exception in getPMTPlotLast24 {}\n".format(e)) 
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
 
 @app.route('/getPMTPlotByDate', methods=['GET']) 
 def getPMTPlotByDate():
@@ -549,7 +613,7 @@ def getPMTPlotByDate():
     start = request.args.get('start')
     end = request.args.get('end')
     args = (start, end)
-    #logStatus("getPMTPlotByDate: start {} and end {} dates: \n".format(start, end)) 
+    logStatus("getPMTPlotByDate: start {} and end {} dates: \n".format(start, end)) 
     
     try:
         conn = utility.getConnection(CFG.database_path)
@@ -557,13 +621,13 @@ def getPMTPlotByDate():
         cur.execute(sql, args)
         rows = cur.fetchall()
 
-        #logStatus("getPMTPlotByDate: data returned {}\n".format(rows))
+        logStatus("getPMTPlotByDate: data returned {}\n".format(rows))
 
         if (rows):
             for row in rows:
      
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
-                #logStatus("getPMTPlotByDate: dt is {}\n".format(dt))
+                logStatus("getPMTPlotByDate: dt is {}\n".format(dt))
                 ts.append(dt)
                 pm25.append(row[1])
                 pm10.append(row[2])

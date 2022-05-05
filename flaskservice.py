@@ -133,6 +133,129 @@ def insertPMTValues():
             conn.close() 
 
 
+@app.route('/insertSGPBase', methods=['POST'])
+def insertSGPBase():
+    """insertSGPBase """    
+    
+    conn = None
+    global CFG
+    global utility
+
+    try:
+          eco2 = request.args.get('eco2')
+          tvoc = request.args.get('tvoc')
+
+          logStatus("insertSGPBase: eco2 {} tvoc {}\n".format(eco2, tvoc))
+          args = (eco2, tvoc)
+          sql = "INSERT INTO sgpbase (eco2, tvoc) VALUES(?, ?)"
+          conn = utility.getConnection(CFG.database_path)
+          conn.execute(sql, args)
+            
+          conn.commit()
+
+          return "OK"
+
+    except Exception as e:
+        logStatus("Exception in insertSGPBase {}\n".format(e))
+        return "insertSGPBase Failed!"
+
+    finally:
+        if conn is not None:
+            conn.close() 
+
+
+@app.route('/insertSGP', methods=['POST'])
+def insertSGP():
+    """insertSGP """    
+    
+    conn = None
+    global CFG
+    global utility
+
+    try:
+
+          eco2 = request.args.get('eco2')
+          tvoc = request.args.get('tvoc')
+          rawh2 = request.args.get('rawh2')
+          raweth = request.args.get('raweth')
+
+          logStatus("insertSGP: eco2 {} tvoc {} rawh2 {} raweth {}\n".format(eco2, tvoc, rawh2, raweth))
+          args = (eco2, tvoc, rawh2, raweth)
+
+          sql = "INSERT INTO sgp(eco2, tvoc, rawh2, raweth) VALUES (?, ?, ?, ?)"
+          conn = utility.getConnection(CFG.database_path)
+          conn.execute(sql, args)
+            
+          conn.commit()
+
+          return "OK"
+
+    except Exception as e:
+        logStatus("Exception in insertSGP {}\n".format(e))
+        return "insertSGP Failed!"
+
+    finally:
+        if conn is not None:
+            conn.close() 
+
+
+@app.route('/getSGPBase', methods=['GET'])
+def getSGPBase():
+    """getSGPBase """    
+    
+    conn = None
+    global CFG
+    global utility
+
+    try:
+
+          sql = "SELECT datetime(MAX(ts), 'localtime'), eco2, tvoc FROM sgpbase"
+          conn = utility.getConnection(CFG.database_path)
+          cur = conn.cursor()
+          cur.execute(sql)
+          row = cur.fetchone()          
+
+          sgp = datastruct.SGPStruct()
+
+          if ((row[1] is None) or (row[2] is None)):
+             
+             sgp.eco2 = row[1]
+             sgp.tvoc = row[2]
+             jsonObj = json.dumps(sgp)
+             logStatus("getSGPBase No data returned\n")
+             if 'internal' in session:
+                 rc = sgp
+             else:
+                 jsonObj = json.dumps(sgp.__dict__)
+                 rc = jsonObj
+
+          else:
+
+              sgp.eco2 = row[1]
+              sgp.tvoc = row[2]
+              jsonObj = json.dumps(sgp.__dict__)
+              logStatus("getSGPBase Request Processed Successfully\n")
+              if 'internal' in session:
+                 rc = sgp
+              else:
+                 jsonObj = json.dumps(sgp.__dict__)
+                 rc = jsonObj
+            
+          return rc
+
+
+    except Exception as e:
+        logStatus("Exception in insertSGP {}\n".format(e))
+        return "insertSGP Failed!"
+
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close() 
+
+
+
 @app.route('/registerDeviceToken', methods=['GET'])
 def registerDeviceToken():
     """registerDeviceToken """    

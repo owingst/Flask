@@ -10,20 +10,15 @@
   <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"
     integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj"
     crossorigin="anonymous"></script>
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <link rel="stylesheet" href="../static/style.css">
-
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="stylesheet" href="../static/style.css">
   <script type="text/javascript" src="../static/weather.js"></script>
 </head>
 
-
 <body style="background-color:black;">
-
-  <h1 align="center" style="color: white;">Home Weather Station</h1>
-
+  <h1 style="color: white;">Home Weather Station</h1>
   <div class="cards">
-    <div class="card" id="indoor_css">
-      <img class="card__image" src="../static/java1.jpg" alt="">
+    <div class="card" id="indoor_css"> <img class="card__image" src="../static/java1.jpg" alt="">
       <div class="card__content">
         <table>
           <tbody>
@@ -50,11 +45,11 @@
             <tr>
               <td>AQI25:</td>
               <td id="aqi25">--</td>
-            </tr>       
+            </tr>
             <tr>
               <td>AQI10:</td>
               <td id="aqi10">--</td>
-            </tr>                  
+            </tr>
           </tbody>
         </table>
       </div>
@@ -62,8 +57,7 @@
         <h2 class="headercenter">Indoor Weather</h2>
       </div>
     </div>
-    <div class="card" id="outdoor_css">
-      <img class="card__image" src="../static/java2.jpg" alt="">
+    <div class="card" id="outdoor_css"> <img class="card__image" src="../static/java2.jpg" alt="">
       <div class="card__content">
         <table>
           <tbody>
@@ -79,7 +73,6 @@
               <td>Wind Direction:</td>
               <td id="outdoorWinddirection">--</td>
             </tr>
-            <tr>
             <tr>
               <td>Windspeed (avg):</td>
               <td id="outdoorWindspeed">--</td>
@@ -105,30 +98,30 @@
             </tr>
           </tbody>
         </table>
-
       </div>
       <div class="card__info">
         <h2 class="headercenter">Outdoor Weather</h2>
       </div>
     </div>
-    <div class="card" id="garage_css">
-      <img class="card__image" src="../static/java3.jpg" alt="">
+    <div class="card" id="garage_css"> <img class="card__image" src="../static/java3.jpg" alt="">
       <div class="card__content">
         <table>
           <tbody>
             <tr>
               <td>Door Status:</td>
               <td id="doorStatus">--</td>
-            </tr>
-            {% if (showDoor) %}
-            <tr>
-              <td><img src="https://media.giphy.com/media/3o6Zta5ZuDgkZTsOWY/giphy.gif" style="width: 48px; height: 48px;"></td>
-            </tr>
-            {% endif %}
+            </tr> 
+            <!-- {% if (showDoor) %} -->
+            <!-- <tr>
+              <td><img src="https://media.giphy.com/media/3o6Zta5ZuDgkZTsOWY/giphy.gif"
+                  style="width: 48px; height: 48px;"></td>
+            </tr> {% endif %} -->
             <tr>
               <td>Door Button:</td>
-              <td><input type="button" id="doorButton" style="background-color: rgb(109, 162, 223);" value="Open/Close"
-                  onclick="moveDoor()"></td>
+              <td>
+                <input type="button" id="doorButton" style="background-color: rgb(109, 162, 223);" value="Open/Close"
+                  onclick="moveDoor()">
+              </td>
             </tr>
             <tr>
               <td>Battery:</td>
@@ -136,19 +129,26 @@
             </tr>
           </tbody>
         </table>
-
       </div>
       <div class="card__info">
         <h2 class="headercenter">Garage Door</h2>
       </div>
     </div>
-    <br/>
-  <div>
-    <!-- <img src="http://192.168.1.74:5000/getPMTPlotLast24" class="transparent" width='400' height='500'> -->
-    <!-- <img src="http://192.168.1.74:5000/getPMTPlotLast24" width='700' height='500'> -->
-    <img src="http://192.168.1.74:5000/getPMTPlotLast24">
   </div>
-
+  <br>
+  <br>
+  <table width="100%">
+    <tr>
+      <td>
+        <img src="http://192.168.1.74:5000/getPMTPlotLast24" alt="PMT" width="33%" height="480">
+      </td>
+      <td>
+        <img src="http://192.168.1.74:5000/getSGPPlotLast24" alt="SGP" width="33%" height="480">
+      </td>
+      <td>
+        <img src="http://192.168.1.74:5000/getRawSGPPlotLast24" alt="RawSGP" width="33%" height="480">
+      </td>
+    </tr>
+  </table>
 </body>
-
 </html>

@@ -32,6 +32,7 @@ import sqlite3
 from matplotlib import pyplot as plt
 #import matlab.engine
 import prctl
+from PIL import Image
 # =============================================================================
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
@@ -511,6 +512,130 @@ def getDscData():
             conn.close()
 
 
+@app.route('/getSGPPlotLast24', methods=['GET']) 
+def getSGPPlotLast24():
+    """ getSGPPlotLast24 """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    ts = []
+    eco2 = []
+    tvoc = []
+    rawh2 = []
+    raweth = []
+    
+    #sql = "SELECT datetime(ts, 'localtime'), eco2, tvoc, rawh2, raweth FROM sgp where ts >= ? and ts <= ? order by ts asc"
+    sql = "SELECT datetime(ts, 'localtime'), tvoc FROM sgp where ts >= ? and ts <= ? order by ts asc"
+
+    end = datetime.datetime.now()
+    start = end - datetime.timedelta(hours = 24)
+    args = (start, end)
+    
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        if (rows):
+            for row in rows:
+     
+                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+                ts.append(dt)
+                tvoc.append(row[1])
+        
+        plt.title('SGP Data')
+        plt.ylabel('Y axis')
+        plt.xlabel('X axis')
+
+        # plt.plot(ts, eco2, 'r', label='eco2', linewidth=2)
+        plt.plot(ts, tvoc, 'b', label='tvoc', linewidth=2)
+        # plt.plot(ts, rawh2, 'b', label='rawh2', linewidth=2)
+        # plt.plot(ts, raweth, 'r', label='raweth', linewidth=2)
+        
+        plt.legend(loc="best")
+        plt.xticks(rotation=90)
+
+        bytes_image = io.BytesIO()
+        plt.savefig(bytes_image, format='png')
+        bytes_image.seek(0)
+        plt.close()
+        return send_file(bytes_image, mimetype='image/png')
+
+    except Exception as e: 
+        logStatus("Exception in getSGPPlotLast24 {}\n".format(e)) 
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
+@app.route('/getRawSGPPlotLast24', methods=['GET']) 
+def getRawSGPPlotLast24():
+    """ getRawSGPPlotLast24 """    
+        
+    global CFG    
+    global utility
+    conn = None
+    cur = None
+    ts = []
+    rawh2 = []
+    raweth = []
+    
+    sql = "SELECT datetime(ts, 'localtime'), rawh2, raweth FROM sgp where ts >= ? and ts <= ? order by ts asc"
+
+    end = datetime.datetime.now()
+    start = end - datetime.timedelta(hours = 24)
+    args = (start, end)
+    
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        if (rows):
+            for row in rows:
+     
+                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+                ts.append(dt)
+                rawh2.append(row[1])
+                raweth.append(row[2])
+        
+        plt.title('Raw SGP Data')
+        plt.ylabel('Y axis')
+        plt.xlabel('X axis')
+
+        plt.plot(ts, rawh2, 'b', label='rawh2', linewidth=2)
+        plt.plot(ts, raweth, 'r', label='raweth', linewidth=2)
+        
+        #plt.legend(loc="upper left")
+        plt.legend(loc="best")
+        plt.xticks(rotation=90)
+
+        bytes_image = io.BytesIO()
+        plt.savefig(bytes_image, format='png')
+        bytes_image.seek(0)
+        plt.close()
+        return send_file(bytes_image, mimetype='image/png')
+
+    except Exception as e: 
+        logStatus("Exception in getRawSGPPlotLast24 {}\n".format(e)) 
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
+
 @app.route('/getPMTData', methods=['GET']) 
 def getPMTData():
     """ getPMTData - gets latest row"""    
@@ -667,7 +792,7 @@ def getPMTPlotLast24():
     aqi25 = []
     aqi10 = []
     
-    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
 
 
     end = datetime.datetime.now()
@@ -687,6 +812,8 @@ def getPMTPlotLast24():
                 ts.append(dt)
                 pm25.append(row[1])
                 pm10.append(row[2])
+        else:
+                logStatus("getPMTPlotLast24: No rows returned\n")        
         
         plt.title('PMT Data')
         plt.ylabel('Y axis')
@@ -694,13 +821,11 @@ def getPMTPlotLast24():
 
         plt.plot(ts, pm25, 'r', label='PM25', linewidth=2)
         plt.plot(ts, pm10, 'b', label='PM10', linewidth=2)
-        plt.legend(loc="upper right")
+        plt.legend(loc="best")
         plt.xticks(rotation=90)
-
         bytes_image = io.BytesIO()
         plt.savefig(bytes_image, format='png')
         bytes_image.seek(0)
-        #plt.savefig('/home/pi/flask/plot.png')
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
@@ -765,7 +890,7 @@ def getPMTPlotByDate():
         plt.plot(ts, pm10, 'b', label='PM10', linewidth=2)
         # plt.plot(ts, aqi25,'g', label='aqi25', linewidth=2)
         # plt.plot(ts, aqi10,'y', label='aqi10', linewidth=2)
-        plt.legend(loc="upper right")
+        plt.legend(loc="best")
         plt.xticks(rotation=90)
         #plt.grid(False,color='k')
         #plt.show()

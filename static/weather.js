@@ -5,11 +5,31 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-04-26 14:22:41
+ * Last modified  : 2022-05-05 15:55:48
  */
 
  function fetchPMTData() {
   fetch("http://192.168.1.74:5000/getPMTPlotLast24")
+  .then(function (response) {
+      return response.content()
+  }).then(function (text) {
+      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
+      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+  });
+}
+
+function fetchSGPData() {
+  fetch("http://192.168.1.74:5000/getSGPPlotLast24")
+  .then(function (response) {
+      return response.content()
+  }).then(function (text) {
+      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
+      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+  });
+}
+
+function fetchRawSGPData() {
+  fetch("http://192.168.1.74:5000/getRawSGPPlotLast24")
   .then(function (response) {
       return response.content()
   }).then(function (text) {
@@ -106,6 +126,8 @@ $(document).ready(function () {
   fetchWeatherData();
   fetchSDSData();
   fetchPMTData();
+  fetchSGPData();
+  fetchRawSGPData();
 
   var socket = io.connect("http://192.168.1.74:5000");
 

@@ -16,7 +16,7 @@
 </head>
 
 <body style="background-color:black;">
-  <h1 style="color: white;">Home Weather Station</h1>
+  <h1 align="center" style="color: white;">Home Weather Station</h1>
   <div class="cards">
     <div class="card" id="indoor_css"> <img class="card__image" src="../static/java1.jpg" alt="">
       <div class="card__content">
@@ -49,6 +49,22 @@
             <tr>
               <td>AQI10:</td>
               <td id="aqi10">--</td>
+            </tr>
+            <tr>
+              <td>TVOC:</td>
+              <td id="tvoc">--</td>
+            </tr>
+            <tr>
+              <td>Raw Eth:</td>
+              <td id="raweth">--</td>
+            </tr>
+            <tr>
+              <td>Raw H2:</td>
+              <td id="rawh2">--</td>
+            </tr>
+            <tr>
+              <td>CO2:</td>
+              <td id="co2">--</td>
             </tr>
           </tbody>
         </table>
@@ -134,21 +150,40 @@
         <h2 class="headercenter">Garage Door</h2>
       </div>
     </div>
+    <section>
+    <p><a href="http://192.168.1.74:5000/getSDSPlotLast24" title="Go to PMT Plot Chart">SDS Plot Last 24</a></p>
+    <p><a href="http://192.168.1.74:5000/getSGPPlotLast24" title="Go to SGP Plot Chart">SGP Plot Last 24</a></p>
+    <p><a href="http://192.168.1.74:5000/getRawSGPPlotLast24" title="Go to Raw SGP PMT Plot Chart">Raw SGP Plot Last 24</a></p>
+    <p><a href="http://192.168.1.74:5000/getSCDPlotLast24" title="Go to SCD PMT Plot Chart">SCD Plot Last 24</a></p>
+    </section>
+    <!-- <table border="1" style="width:100%">
+      <tr style="width:100%">
+        <td height="200"><a href="http://192.168.1.74:5000/getSDSPlotLast24" title="Go to PMT Plot Chart">PMT Plot Last 24</a> </td>
+        <td height="200"><a href="http://192.168.1.74:5000/getSGPPlotLast24" title="Go to SGP Plot Chart">SGP Plot Last 24</a> </td>
+      </tr>
+      <tr style="width:100%">
+        <td  height="200"><a href="http://192.168.1.74:5000/getRawSGPPlotLast24" title="Go to Raw SGP PMT Plot Chart">Raw SGP Plot Last 24</a> </td>
+        <td  height="200"><a href="http://192.168.1.74:5000/getSCDPlotLast24" title="Go to SCD PMT Plot Chart">SCD Plot Last 24</a> </td>
+      </tr>
+    </table> -->
+  </div>
+  <!-- <br>
+  <br> -->
+
+  <!-- <div style="text-align:center">
+    <a href="http://192.168.1.74:5000/getSDSPlotLast24" title="Go to PMT Plot Chart">Click PMT Plot Last 24</a> 
   </div>
   <br>
+  <div style="text-align:center">
+    <a href="http://192.168.1.74:5000/getSGPPlotLast24" title="Go to SGP Plot Chart">Click SGP Plot Last 24</a> 
+  </div>
   <br>
-  <table width="100%">
-    <tr>
-      <td>
-        <img src="http://192.168.1.74:5000/getPMTPlotLast24" alt="PMT" width="33%" height="480">
-      </td>
-      <td>
-        <img src="http://192.168.1.74:5000/getSGPPlotLast24" alt="SGP" width="33%" height="480">
-      </td>
-      <td>
-        <img src="http://192.168.1.74:5000/getRawSGPPlotLast24" alt="RawSGP" width="33%" height="480">
-      </td>
-    </tr>
-  </table>
+  <div style="text-align:center">
+  <a href="http://192.168.1.74:5000/getRawSGPPlotLast24" title="Go to Raw SGP PMT Plot Chart">Click Raw SGP Plot Last 24</a> 
+  </div>
+  <br>
+  <div style="text-align:center">
+  <a href="http://192.168.1.74:5000/getSCDPlotLast24" title="Go to SCD PMT Plot Chart">Click SCD Plot Last 24</a> 
+  </div> -->
 </body>
 </html>

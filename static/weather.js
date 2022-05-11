@@ -5,38 +5,8 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-05-05 15:55:48
+ * Last modified  : 2022-05-10 20:09:07
  */
-
- function fetchPMTData() {
-  fetch("http://192.168.1.74:5000/getPMTPlotLast24")
-  .then(function (response) {
-      return response.content()
-  }).then(function (text) {
-      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
-      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
-  });
-}
-
-function fetchSGPData() {
-  fetch("http://192.168.1.74:5000/getSGPPlotLast24")
-  .then(function (response) {
-      return response.content()
-  }).then(function (text) {
-      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
-      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
-  });
-}
-
-function fetchRawSGPData() {
-  fetch("http://192.168.1.74:5000/getRawSGPPlotLast24")
-  .then(function (response) {
-      return response.content()
-  }).then(function (text) {
-      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
-      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
-  });
-}
 
 function fetchDscData() {
   fetch("http://192.168.1.74:5000/getDscData")
@@ -81,19 +51,6 @@ function fetchWeatherData() {
   });
 }
 
-function fetchSDSData() {
-  
-  fetch("http://192.168.1.74:5000/getPMTData")
-  .then(function (response) {
-      return response.json();
-  }).then(function (text) {
-    document.getElementById("pm25").innerHTML = text['pm25'];
-    document.getElementById("pm10").innerHTML = text['pm10'];
-    document.getElementById("aqi25").innerHTML = text['aqi25'];
-    document.getElementById("aqi10").innerHTML = text['aqi10'];
-  });
-}
-
 function moveDoor() {
   fetch("http://192.168.1.74:5000/moveDoor")
 }
@@ -118,6 +75,48 @@ function getButtonValue() {
   }
 }
 
+function fetchSGPData() {
+  fetch("http://192.168.1.74:5000/getSGPData")
+  .then(function (response) {
+      return response.content()
+  }).then(function (text) {
+      document.getElementById("tvoc").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
+  });
+}
+
+function fetchRawSGPData() {
+  fetch("http://192.168.1.74:5000/getRawSGPPlotLast24")
+  .then(function (response) {
+      return response.content()
+  }).then(function (text) {
+      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
+      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+  });
+}
+
+function fetchSDSData() {
+  
+  fetch("http://192.168.1.74:5000/getSDSData")
+  .then(function (response) {
+      return response.json();
+  }).then(function (text) {
+    document.getElementById("pm25").innerHTML = text['pm25'];
+    document.getElementById("pm10").innerHTML = text['pm10'];
+    document.getElementById("aqi25").innerHTML = text['aqi25'];
+    document.getElementById("aqi10").innerHTML = text['aqi10'];
+  });
+}
+
+function fetchSCDData() {
+  
+  fetch("http://192.168.1.74:5000/getSCDData")
+  .then(function (response) {
+      return response.json();
+  }).then(function (text) {
+    document.getElementById("co2").innerHTML = text['co2'];
+  });
+}
+
 $(document).ready(function () {
 
   var showDoor = false
@@ -125,9 +124,10 @@ $(document).ready(function () {
   fetchF007Data();
   fetchWeatherData();
   fetchSDSData();
-  fetchPMTData();
   fetchSGPData();
   fetchRawSGPData();
+  fetchSCDData();
+
 
   var socket = io.connect("http://192.168.1.74:5000");
 

@@ -5,7 +5,7 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-05-10 20:09:07
+ * Last modified  : 2022-05-11 16:05:08
  */
 
 function fetchDscData() {
@@ -78,19 +78,11 @@ function getButtonValue() {
 function fetchSGPData() {
   fetch("http://192.168.1.74:5000/getSGPData")
   .then(function (response) {
-      return response.content()
+      return response.json()
   }).then(function (text) {
-      document.getElementById("tvoc").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
-  });
-}
-
-function fetchRawSGPData() {
-  fetch("http://192.168.1.74:5000/getRawSGPPlotLast24")
-  .then(function (response) {
-      return response.content()
-  }).then(function (text) {
-      // document.getElementById("doorStatus").innerHTML = (text['status'] === 1) ?  "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
-      // document.getElementById("doorBattery").innerHTML = (text['battery'] === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+      document.getElementById("tvoc").innerHTML = text['tvoc']
+      document.getElementById("raweth").innerHTML = text['raweth'];
+      document.getElementById("rawh2").innerHTML = text['rawh2'];
   });
 }
 
@@ -100,6 +92,7 @@ function fetchSDSData() {
   .then(function (response) {
       return response.json();
   }).then(function (text) {
+
     document.getElementById("pm25").innerHTML = text['pm25'];
     document.getElementById("pm10").innerHTML = text['pm10'];
     document.getElementById("aqi25").innerHTML = text['aqi25'];
@@ -125,7 +118,6 @@ $(document).ready(function () {
   fetchWeatherData();
   fetchSDSData();
   fetchSGPData();
-  fetchRawSGPData();
   fetchSCDData();
 
 
@@ -146,6 +138,7 @@ $(document).ready(function () {
       ds = msg;
       document.getElementById("doorStatus").innerHTML = (ds.status === 1) ? "<span style='color: red;'>Closed</span>" : "<span style='color: green;'>Open</span>";
       document.getElementById("doorBattery").innerHTML = (ds.battery === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+
     } else if (msg.type == "SDS") {
       sd = msg;
       document.getElementById("pm25").innerHTML = sd.pm25;
@@ -153,11 +146,22 @@ $(document).ready(function () {
       document.getElementById("aqi25").innerHTML = sd.aqi25;
       document.getElementById("aqi10").innerHTML = sd.aqi10;
 
+    } else if (msg.type == "SGP") { 
+      sgp = msg
+      document.getElementById("tvoc").innerHTML = sgp.tvoc;
+      document.getElementById("rawh2").innerHTML = sgp.rawh2;
+      document.getElementById("aqi25").innerHTML = sgp.aqi25;
+
+    } else if (msg.type == "SCD") { 
+      scd = msg
+      document.getElementById("co2").innerHTML = scd.co2;
+
     } else if (msg.type == "F007th") {
       ts = msg;
       document.getElementById("indoorTemp").innerHTML = ts.temperature;
       document.getElementById("indoorHumidity").innerHTML = ts.humidity;
       document.getElementById("indoorBattery").innerHTML = (ts.battery === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
+      
     } else {
       ws = msg;
       if (ws.light > 10000) {
@@ -173,6 +177,6 @@ $(document).ready(function () {
       document.getElementById("outdoorLight").innerHTML = ws.light;
       document.getElementById("outdoorUV").innerHTML = ws.uv;
       document.getElementById("outdoorBattery").innerHTML = (ws.battery === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";
-    }
+    } 
   });
 });

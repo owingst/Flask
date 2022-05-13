@@ -8,41 +8,41 @@
 # Usage           : /home/pi/flask/flaskservice.sh
 # Python          : 3.9.2
 # =============================================================================
+import socket
 import datetime
 import os
 import sys
 import time
 import io
-from xmlrpc.client import DateTime
 import RPi.GPIO as GPIO
-sys.path.append("/home/pi/sdr/")
-import datastruct
-from flask import Flask
-from flask import json
-from flask import jsonify
-from flask import render_template
-from flask import request
-from flask import session
-from flask import send_file
-from flask_socketio import SocketIO, emit
-import paho.mqtt.client as mqtt
-import utilities
-import socket 
-import sqlite3
-from matplotlib import pyplot as plt
-#import matlab.engine
-import prctl
 from PIL import Image
+import prctl
+from matplotlib import pyplot as plt
+import sqlite3
+sys.path.append("/home/pi/sdr/")
+
+import paho.mqtt.client as mqtt
+from flask_socketio import SocketIO, emit
+from flask import send_file
+from flask import session
+from flask import request
+from flask import render_template
+from flask import jsonify
+from flask import json
+from flask import Flask
+import datastruct
+import utilities
 # =============================================================================
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
-socketio = SocketIO(app,logger=True, engineio_logger=True)
+socketio = SocketIO(app, logger=True, engineio_logger=True)
 
 RELAY_CH1 = 26
 CONNECTED = False
 CFG = None
 utility = None
-       
+
+
 @socketio.on('connect')
 def test_connect():
     logStatus("Client Connected\n")
@@ -53,7 +53,7 @@ def test_connect():
 def test_disconnect():
     logStatus("Client disconnected\n")
 
-    
+
 @socketio.on('message')
 def handle_message(data):
     logStatus('received message: ' + data)
@@ -61,7 +61,7 @@ def handle_message(data):
 
 def sendData(data):
     socketio.emit('new data', data, broadcast=True)
-    
+
 
 def logStatus(msg):
     """ Function to write logs to a file. Never could get Flask logging to a file to work.... """
@@ -69,46 +69,53 @@ def logStatus(msg):
         fhandle = open('/home/pi/flask/flaskservice.log', 'a')
         fhandle.write(msg)
         fhandle.close()
-        
+
     except Exception as e:
         logStatus("Exception in logStatus {}\n".format(e))
 
 
 def on_connect(client, userdata, rc, properties=None):
     """ on_connect """
-    
+
     global CFG
-    
+
     client.subscribe(CFG.changed_topic)
     logStatus("on_connect: Subscribed\n")
 
 
 def on_message(client, userdata, msg):
-    """ on_message """    
-    
+    """ on_message """
+
     data = json.loads(msg.payload.decode())
 
     sendData(data)
-    
-        
+
+
 @app.route('/getLogs', methods=['GET'])
 def getLogs():
-    """getLogs """    
-    
+    """getLogs """
+
     file = open("/home/pi/sdr/sdrsensor.log")
 
     lines = file.readlines()
-    
+
     return jsonify(lines)
 
 
+@app.route('/sendPush', methods=['GET'])
+def sendPush():
+    """sendPush """
 
+    global CFG
+    global utility
 
+    utility.pushErrorMsg()
+    
 
 @app.route('/registerDeviceToken', methods=['GET'])
 def registerDeviceToken():
-    """registerDeviceToken """    
-    
+    """registerDeviceToken """
+
     conn = None
     global CFG
     global utility
@@ -118,13 +125,13 @@ def registerDeviceToken():
         token = request.args.get('token')
         device = request.args.get('device')
         args = (token, device)
-        logStatus("Token is {} Device is {}\n".format(token, device))   
+        logStatus("Token is {} Device is {}\n".format(token, device))
 
         sql = "INSERT INTO tokens(token, device) VALUES (?, ?) ON CONFLICT(device) DO UPDATE SET token = EXCLUDED.token"
 
         conn = utility.getConnection(CFG.database_path)
         conn.execute(sql, args)
-        
+
         conn.commit()
 
         return "registerDeviceToken success"
@@ -135,7 +142,7 @@ def registerDeviceToken():
 
     finally:
         if conn is not None:
-            conn.close() 
+            conn.close()
 
 
 @app.route('/getProcs/<name>', methods=['GET'])
@@ -175,12 +182,12 @@ def moveDoor():
         return "moveDoor Request Processed Successfully"
 
     except Exception as e:
-        logStatus("Exception in moveDoor {}\n".format(e))         
-                       
-            
-@app.route('/getWeathersenseData', methods=['GET'])              
+        logStatus("Exception in moveDoor {}\n".format(e))
+
+
+@app.route('/getWeathersenseData', methods=['GET'])
 def getWeathersenseData():
-    """ getWeathersenseData """    
+    """ getWeathersenseData """
 
     global CFG
     global utility
@@ -196,7 +203,7 @@ def getWeathersenseData():
         row = cur.fetchone()
 
         ws = datastruct.WeatherStruct()
-        if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None) or (row[5] is None) or (row[6] is None) or (row[7] is None) or (row[8] is None) or (row[9] is None)):             
+        if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None) or (row[5] is None) or (row[6] is None) or (row[7] is None) or (row[8] is None) or (row[9] is None)):
 
             ws.temperature = 1000
             ws.humidity = 1000
@@ -209,10 +216,10 @@ def getWeathersenseData():
             ws.battery = 9
             if 'internal' in session:
                 rc = ws
-            else:   
+            else:
                 jsonObj = json.dumps(ws.__dict__)
                 rc = jsonObj
-                
+
         else:
 
             ws.temperature = row[1]
@@ -226,14 +233,14 @@ def getWeathersenseData():
             ws.battery = row[9]
             if 'internal' in session:
                 rc = ws
-            else:   
+            else:
                 jsonObj = json.dumps(ws.__dict__)
                 rc = jsonObj
-            
+
         return rc
-  
+
     except Exception as e:
-        logStatus("Exception in getData {}\n".format(e))   
+        logStatus("Exception in getData {}\n".format(e))
         return e
 
     finally:
@@ -241,15 +248,15 @@ def getWeathersenseData():
             cur.close()
 
         if conn is not None:
-            conn.close()   
-                        
-            
-@app.route('/getF007thData', methods=['GET']) 
+            conn.close()
+
+
+@app.route('/getF007thData', methods=['GET'])
 def getF007thData():
     """ getF007thData """
-           
-    global CFG      
-    global utility 
+
+    global CFG
+    global utility
     conn = None
     cur = None
     sql = "SELECT datetime(MAX(ts), 'localtime'), temperature, humidity, battery FROM f007th"
@@ -261,7 +268,7 @@ def getF007thData():
         cur.execute(sql)
         row = cur.fetchone()
 
-        if ((row[1] is None) or (row[2] is None) or (row[3] is None)): 
+        if ((row[1] is None) or (row[2] is None) or (row[3] is None)):
             fs = datastruct.F007thStruct
             fs.temperature = row[1]
             fs.humidity = row[2]
@@ -270,7 +277,7 @@ def getF007thData():
             logStatus("getF007thData No data returned\n")
             if 'internal' in session:
                 rc = fs
-            else:   
+            else:
                 jsonObj = json.dumps(fs.__dict__)
                 rc = jsonObj
 
@@ -283,14 +290,14 @@ def getF007thData():
             logStatus("getF007thData Request Processed Successfully\n")
             if 'internal' in session:
                 rc = fs
-            else:   
+            else:
                 jsonObj = json.dumps(fs.__dict__)
                 rc = jsonObj
-            
+
         return rc
-    
+
     except Exception as e:
-        logStatus("Exception in getData {}\n".format(e))   
+        logStatus("Exception in getData {}\n".format(e))
         return e
 
     finally:
@@ -298,13 +305,13 @@ def getF007thData():
             cur.close()
 
         if conn is not None:
-            conn.close()   
-                       
-                        
-@app.route('/getDscData', methods=['GET']) 
+            conn.close()
+
+
+@app.route('/getDscData', methods=['GET'])
 def getDscData():
     """ API to get latest DoorStatus from DB """
-    
+
     global CFG
     global utility
     conn = None
@@ -312,14 +319,14 @@ def getDscData():
 
     sql = "select datetime(MAX(ts), 'localtime'), esn, status, battery from dsc"
 
-    try: 
-   
+    try:
+
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
         cur.execute(sql)
         row = cur.fetchone()
-        
-        if ((row[1] is None) or (row[2] is None) or (row[3] is None)): 
+
+        if ((row[1] is None) or (row[2] is None) or (row[3] is None)):
             ds = datastruct.DscStruct()
             ds.type = "DSC"
             ds.esn = 9
@@ -329,10 +336,10 @@ def getDscData():
             logStatus("getDscData No data returned\n")
             if 'internal' in session:
                 rc = ds
-            else:   
+            else:
                 jsonObj = json.dumps(ds.__dict__)
                 rc = jsonObj
-        else:    
+        else:
             ds = datastruct.DscStruct()
             ds.type = "DSC"
             ds.esn = row[1]
@@ -342,14 +349,14 @@ def getDscData():
             logStatus("getDscData Request Processed Successfully\n")
             if 'internal' in session:
                 rc = ds
-            else:   
+            else:
                 jsonObj = json.dumps(ds.__dict__)
                 rc = jsonObj
-            
+
         return rc
 
     except Exception as e:
-        logStatus("Exception in getDscData {}\n".format(e))   
+        logStatus("Exception in getDscData {}\n".format(e))
         return e
 
     finally:
@@ -360,40 +367,39 @@ def getDscData():
             conn.close()
 
 
-
-@app.route('/getRainfall', methods=['GET']) 
+@app.route('/getRainfall', methods=['GET'])
 def getRainfall():
-    """ getRainfall """    
-        
-    global CFG    
+    """ getRainfall """
+
+    global CFG
     global utility
     conn = None
     cur = None
 
     sql = "select max(cumulativerain) - min(cumulativerain) as difference FROM weathersense where ts >= ? and ts <= ?"
-    
+
     start = datetime.datetime.now().strftime("%Y-%m-%d 00:00:00")
     end = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     args = (start, end)
-    logStatus("getRainfall: start {} and end {} dates: \n".format(start, end))  
+    logStatus("getRainfall: start {} and end {} dates: \n".format(start, end))
 
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
         cur.execute(sql, args)
-        row = cur.fetchone()    
+        row = cur.fetchone()
 
         if row:
             rc = row[0]
             jsonObj = json.dumps({'rainfall': rc})
         else:
             rc = "getRainfall failed"
-       
-        logStatus("returning rainfall {}\n".format(rc)) 
+
+        logStatus("returning rainfall {}\n".format(rc))
         return jsonObj
 
-    except Exception as e: 
-        logStatus("Exception in getRainfall {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getRainfall {}\n".format(e))
         return e
 
     finally:
@@ -403,11 +409,11 @@ def getRainfall():
         if conn is not None:
             conn.close()
 
-                 
+
 @app.route('/ping/<value>', methods=['GET'])
 def ping(value):
     """ API to test if server is up """
-    
+
     return value
 
 
@@ -417,42 +423,44 @@ def getConfig():
     jsonObj = json.dumps(CFG.__dict__)
     return jsonObj
 
- 
+
 @app.route("/web")
 def index():
     """ Web App entry point """
-    logStatus("Flask Service Web entry called\n")   
-    session['internal'] = 1 
+    logStatus("Flask Service Web entry called\n")
+    session['internal'] = 1
     ds = getDscData()
     ts = getF007thData()
     ws = getWeathersenseData()
     session.pop('internal', None)
-    return render_template('index.html', ds=ds, ts=ts, ws=ws)      
+    return render_template('index.html', ds=ds, ts=ts, ws=ws)
 
-#***************************************** SDS/SGP/SCD Sensor code below *************************************************************************
+# ***************************************** SDS/SGP/SCD Sensor code below *************************************************************************
+
 
 @app.route('/insertSDSValues', methods=['POST'])
 def insertSDSValues():
-    """insertSDSValues """    
-    
+    """insertSDSValues """
+
     conn = None
     global CFG
     global utility
 
     try:
-          pm10 = request.args.get('pm10')
-          pm25 = request.args.get('pm25')
-          aqi10 = request.args.get('aqi10')
-          aqi25 = request.args.get('aqi25')
-          logStatus("insertSDSValues: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
-          args = (pm25, pm10, aqi25, aqi10)
-          sql = "INSERT INTO pmt(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
-          conn = utility.getConnection(CFG.database_path)
-          conn.execute(sql, args)
-            
-          conn.commit()
+        pm10 = request.args.get('pm10')
+        pm25 = request.args.get('pm25')
+        aqi10 = request.args.get('aqi10')
+        aqi25 = request.args.get('aqi25')
+        logStatus("insertSDSValues: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(
+            pm25, pm10, aqi25, aqi10))
+        args = (pm25, pm10, aqi25, aqi10)
+        sql = "INSERT INTO pmt(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
+        conn = utility.getConnection(CFG.database_path)
+        conn.execute(sql, args)
 
-          return "OK"
+        conn.commit()
+
+        return "OK"
 
     except Exception as e:
         logStatus("Exception in insertSDSValues {}\n".format(e))
@@ -460,30 +468,30 @@ def insertSDSValues():
 
     finally:
         if conn is not None:
-            conn.close() 
+            conn.close()
 
 
 @app.route('/insertSGPBase', methods=['POST'])
 def insertSGPBase():
-    """insertSGPBase """    
-    
+    """insertSGPBase """
+
     conn = None
     global CFG
     global utility
 
     try:
-          eco2 = request.args.get('eco2')
-          tvoc = request.args.get('tvoc')
+        eco2 = request.args.get('eco2')
+        tvoc = request.args.get('tvoc')
 
-          logStatus("insertSGPBase: eco2 {} tvoc {}\n".format(eco2, tvoc))
-          args = (eco2, tvoc)
-          sql = "INSERT INTO sgpbase (eco2, tvoc) VALUES(?, ?)"
-          conn = utility.getConnection(CFG.database_path)
-          conn.execute(sql, args)
-            
-          conn.commit()
+        logStatus("insertSGPBase: eco2 {} tvoc {}\n".format(eco2, tvoc))
+        args = (eco2, tvoc)
+        sql = "INSERT INTO sgpbase (eco2, tvoc) VALUES(?, ?)"
+        conn = utility.getConnection(CFG.database_path)
+        conn.execute(sql, args)
 
-          return "OK"
+        conn.commit()
+
+        return "OK"
 
     except Exception as e:
         logStatus("Exception in insertSGPBase {}\n".format(e))
@@ -491,28 +499,28 @@ def insertSGPBase():
 
     finally:
         if conn is not None:
-            conn.close() 
+            conn.close()
 
 
 @app.route('/insertSCD', methods=['POST'])
 def insertSCD():
-    """insertSCD """    
-    
+    """insertSCD """
+
     conn = None
     global CFG
     global utility
 
     try:
 
-          co2 = request.args.get('co2')
-          logStatus("insertSCD: co2: {}\n".format(co2))
-          sql = "INSERT INTO scd(co2) VALUES (?)"
-          conn = utility.getConnection(CFG.database_path)
-          conn.execute(sql, [co2])
-            
-          conn.commit()
+        co2 = request.args.get('co2')
+        logStatus("insertSCD: co2: {}\n".format(co2))
+        sql = "INSERT INTO scd(co2) VALUES (?)"
+        conn = utility.getConnection(CFG.database_path)
+        conn.execute(sql, [co2])
 
-          return "OK"
+        conn.commit()
+
+        return "OK"
 
     except Exception as e:
         logStatus("Exception in insertSCD {}\n".format(e))
@@ -520,34 +528,35 @@ def insertSCD():
 
     finally:
         if conn is not None:
-            conn.close() 
+            conn.close()
 
 
 @app.route('/insertSGP', methods=['POST'])
 def insertSGP():
-    """insertSGP """    
-    
+    """insertSGP """
+
     conn = None
     global CFG
     global utility
 
     try:
 
-          eco2 = request.args.get('eco2')
-          tvoc = request.args.get('tvoc')
-          rawh2 = request.args.get('rawh2')
-          raweth = request.args.get('raweth')
+        eco2 = request.args.get('eco2')
+        tvoc = request.args.get('tvoc')
+        rawh2 = request.args.get('rawh2')
+        raweth = request.args.get('raweth')
 
-          logStatus("insertSGP: eco2 {} tvoc {} rawh2 {} raweth {}\n".format(eco2, tvoc, rawh2, raweth))
-          args = (eco2, tvoc, rawh2, raweth)
+        logStatus("insertSGP: eco2 {} tvoc {} rawh2 {} raweth {}\n".format(
+            eco2, tvoc, rawh2, raweth))
+        args = (eco2, tvoc, rawh2, raweth)
 
-          sql = "INSERT INTO sgp(eco2, tvoc, rawh2, raweth) VALUES (?, ?, ?, ?)"
-          conn = utility.getConnection(CFG.database_path)
-          conn.execute(sql, args)
-            
-          conn.commit()
+        sql = "INSERT INTO sgp(eco2, tvoc, rawh2, raweth) VALUES (?, ?, ?, ?)"
+        conn = utility.getConnection(CFG.database_path)
+        conn.execute(sql, args)
 
-          return "OK"
+        conn.commit()
+
+        return "OK"
 
     except Exception as e:
         logStatus("Exception in insertSGP {}\n".format(e))
@@ -555,84 +564,141 @@ def insertSGP():
 
     finally:
         if conn is not None:
-            conn.close() 
+            conn.close()
 
 
-@app.route('/getSGPBase', methods=['GET'])
-def getSGPBase():
-    """getSGPBase """    
-    
+@app.route('/getSGPData', methods=['GET'])
+def getSGPData():
+    """getSGPData """
+
     conn = None
     global CFG
     global utility
 
     try:
 
-          sql = "SELECT datetime(MAX(ts), 'localtime'), eco2, tvoc FROM sgpbase"
-          conn = utility.getConnection(CFG.database_path)
-          cur = conn.cursor()
-          cur.execute(sql)
-          row = cur.fetchone()          
+        sql = "SELECT datetime(MAX(ts), 'localtime'), tvoc, rawh2, raweth FROM sgp"
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql)
+        row = cur.fetchone()
 
-          sgp = datastruct.SGPStruct()
+        sgp = datastruct.SGPStruct()
 
-          if ((row[1] is None) or (row[2] is None)):
-             
-             sgp.eco2 = row[1]
-             sgp.tvoc = row[2]
-             jsonObj = json.dumps(sgp)
-             logStatus("getSGPBase No data returned\n")
-             if 'internal' in session:
-                 rc = sgp
-             else:
-                 jsonObj = json.dumps(sgp.__dict__)
-                 rc = jsonObj
+        if ((row[1] is None) or (row[2] is None) or (row[3] is None)):
 
-          else:
+            sgp.tvoc = 9
+            sgp.rawh2 = 9
+            sgp.raweth = 9
+            jsonObj = json.dumps(sgp)
+            logStatus("getSGPData No data returned\n")
+            if 'internal' in session:
+                rc = sgp
+            else:
+                jsonObj = json.dumps(sgp.__dict__)
+                rc = jsonObj
 
-              sgp.eco2 = row[1]
-              sgp.tvoc = row[2]
-              jsonObj = json.dumps(sgp.__dict__)
-              logStatus("getSGPBase Request Processed Successfully\n")
-              if 'internal' in session:
-                 rc = sgp
-              else:
-                 jsonObj = json.dumps(sgp.__dict__)
-                 rc = jsonObj
-            
-          return rc
+        else:
 
+            sgp.tvoc = row[1]
+            sgp.rawh2 = row[2]
+            sgp.raweth = row[3]
+            jsonObj = json.dumps(sgp.__dict__)
+            logStatus("getSGPData Request Processed Successfully\n")
+            if 'internal' in session:
+                rc = sgp
+            else:
+                jsonObj = json.dumps(sgp.__dict__)
+                rc = jsonObj
+
+        return rc
 
     except Exception as e:
-        logStatus("Exception in insertSGP {}\n".format(e))
-        return "insertSGP Failed!"
+        logStatus("Exception in getSGPData {}\n".format(e))
+        return "getSGPData Failed!"
 
     finally:
         if cur is not None:
             cur.close()
         if conn is not None:
-            conn.close() 
+            conn.close()
 
 
+@app.route('/getSGPBase', methods=['GET'])
+def getSGPBase():
+    """getSGPBase """
 
-@app.route('/getSCDPlotByDate', methods=['GET']) 
+    conn = None
+    global CFG
+    global utility
+
+    try:
+
+        sql = "SELECT datetime(MAX(ts), 'localtime'), eco2, tvoc FROM sgpbase"
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql)
+        row = cur.fetchone()
+
+        sgp = datastruct.SGPStruct()
+
+        if ((row[1] is None) or (row[2] is None)):
+
+            sgp.type = "SGP"
+            sgp.eco2 = 9
+            sgp.tvoc = 9
+            jsonObj = json.dumps(sgp)
+            logStatus("getSGPBase No data returned\n")
+            if 'internal' in session:
+                rc = sgp
+            else:
+                jsonObj = json.dumps(sgp.__dict__)
+                rc = jsonObj
+
+        else:
+
+            sgp.type = "SGP"
+            sgp.eco2 = row[1]
+            sgp.tvoc = row[2]
+            jsonObj = json.dumps(sgp.__dict__)
+            logStatus("getSGPBase Request Processed Successfully\n")
+            if 'internal' in session:
+                rc = sgp
+            else:
+                jsonObj = json.dumps(sgp.__dict__)
+                rc = jsonObj
+
+        return rc
+
+    except Exception as e:
+        logStatus("Exception in getSGPBase {}\n".format(e))
+        return "getSGPBase Failed!"
+
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/getSCDPlotByDate', methods=['GET'])
 def getSCDPlotByDate():
-    """ getSCDPlotByDate """    
-        
-    global CFG    
+    """ getSCDPlotByDate """
+
+    global CFG
     global utility
     conn = None
     cur = None
     ts = []
     co2 = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), co2 FROM scd where ts >= ? and ts <= ? order by ts asc"
 
     start = request.args.get('start')
     end = request.args.get('end')
     args = (start, end)
     logStatus("getSCDPlotByDate start: {} end: {}\n".format(start, end))
-    
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -641,11 +707,11 @@ def getSCDPlotByDate():
 
         if (rows):
             for row in rows:
-     
+
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 ts.append(dt)
                 co2.append(row[1])
-        
+
         plt.title('SCD Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
@@ -661,8 +727,8 @@ def getSCDPlotByDate():
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
-    except Exception as e: 
-        logStatus("Exception in getSCDPlotByDate {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSCDPlotByDate {}\n".format(e))
         return e
 
     finally:
@@ -673,25 +739,25 @@ def getSCDPlotByDate():
             conn.close()
 
 
-@app.route('/getSCDPlotLast24', methods=['GET']) 
+@app.route('/getSCDPlotLast24', methods=['GET'])
 def getSCDPlotLast24():
-    """ getSCDPlotLast24 """    
-        
-    global CFG    
+    """ getSCDPlotLast24 """
+
+    global CFG
     global utility
     conn = None
     cur = None
     ts = []
     co2 = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), co2 FROM scd where ts >= ? and ts <= ? order by ts asc"
 
     end = datetime.datetime.now()
-    start = end - datetime.timedelta(hours = 24)
+    start = end - datetime.timedelta(hours=24)
 
     logStatus("getSCDPlotLast24 start: {} end: {}\n".format(start, end))
     args = (start, end)
-    
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -700,11 +766,11 @@ def getSCDPlotLast24():
 
         if (rows):
             for row in rows:
-     
+
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 ts.append(dt)
                 co2.append(row[1])
-        
+
         plt.title('SCD Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
@@ -720,8 +786,8 @@ def getSCDPlotLast24():
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
-    except Exception as e: 
-        logStatus("Exception in getSGPPlotLast24 {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSGPPlotLast24 {}\n".format(e))
         return e
 
     finally:
@@ -732,11 +798,11 @@ def getSCDPlotLast24():
             conn.close()
 
 
-@app.route('/getSGPPlotLast24', methods=['GET']) 
+@app.route('/getSGPPlotLast24', methods=['GET'])
 def getSGPPlotLast24():
-    """ getSGPPlotLast24 """    
-        
-    global CFG    
+    """ getSGPPlotLast24 """
+
+    global CFG
     global utility
     conn = None
     cur = None
@@ -745,14 +811,14 @@ def getSGPPlotLast24():
     tvoc = []
     rawh2 = []
     raweth = []
-    
+
     #sql = "SELECT datetime(ts, 'localtime'), eco2, tvoc, rawh2, raweth FROM sgp where ts >= ? and ts <= ? order by ts asc"
     sql = "SELECT datetime(ts, 'localtime'), tvoc FROM sgp where ts >= ? and ts <= ? order by ts asc"
 
     end = datetime.datetime.now()
-    start = end - datetime.timedelta(hours = 24)
+    start = end - datetime.timedelta(hours=24)
     args = (start, end)
-    
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -761,11 +827,11 @@ def getSGPPlotLast24():
 
         if (rows):
             for row in rows:
-     
+
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 ts.append(dt)
                 tvoc.append(row[1])
-        
+
         plt.title('SGP Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
@@ -774,7 +840,7 @@ def getSGPPlotLast24():
         plt.plot(ts, tvoc, 'b', label='tvoc', linewidth=2)
         # plt.plot(ts, rawh2, 'b', label='rawh2', linewidth=2)
         # plt.plot(ts, raweth, 'r', label='raweth', linewidth=2)
-        
+
         plt.legend(loc="best")
         plt.xticks(rotation=90)
 
@@ -784,8 +850,8 @@ def getSGPPlotLast24():
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
-    except Exception as e: 
-        logStatus("Exception in getSGPPlotLast24 {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSGPPlotLast24 {}\n".format(e))
         return e
 
     finally:
@@ -796,24 +862,24 @@ def getSGPPlotLast24():
             conn.close()
 
 
-@app.route('/getRawSGPPlotLast24', methods=['GET']) 
+@app.route('/getRawSGPPlotLast24', methods=['GET'])
 def getRawSGPPlotLast24():
-    """ getRawSGPPlotLast24 """    
-        
-    global CFG    
+    """ getRawSGPPlotLast24 """
+
+    global CFG
     global utility
     conn = None
     cur = None
     ts = []
     rawh2 = []
     raweth = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), rawh2, raweth FROM sgp where ts >= ? and ts <= ? order by ts asc"
 
     end = datetime.datetime.now()
-    start = end - datetime.timedelta(hours = 24)
+    start = end - datetime.timedelta(hours=24)
     args = (start, end)
-    
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -822,19 +888,19 @@ def getRawSGPPlotLast24():
 
         if (rows):
             for row in rows:
-     
+
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 ts.append(dt)
                 rawh2.append(row[1])
                 raweth.append(row[2])
-        
+
         plt.title('Raw SGP Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
 
         plt.plot(ts, rawh2, 'b', label='rawh2', linewidth=2)
         plt.plot(ts, raweth, 'r', label='raweth', linewidth=2)
-        
+
         #plt.legend(loc="upper left")
         plt.legend(loc="best")
         plt.xticks(rotation=90)
@@ -845,8 +911,8 @@ def getRawSGPPlotLast24():
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
-    except Exception as e: 
-        logStatus("Exception in getRawSGPPlotLast24 {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getRawSGPPlotLast24 {}\n".format(e))
         return e
 
     finally:
@@ -857,15 +923,15 @@ def getRawSGPPlotLast24():
             conn.close()
 
 
-@app.route('/getSCDData', methods=['GET']) 
+@app.route('/getSCDData', methods=['GET'])
 def getSCDData():
-    """ getSCDData - gets latest row"""    
-        
-    global CFG    
+    """ getSCDData - gets latest row"""
+
+    global CFG
     global utility
     conn = None
     cur = None
-    
+
     sql = "SELECT datetime(max(ts), 'localtime'), co2 FROM scd"
 
     try:
@@ -874,7 +940,7 @@ def getSCDData():
         cur.execute(sql)
         row = cur.fetchone()
 
-        if ((row is None) or (row[0] is None)): 
+        if ((row is None) or (row[0] is None)):
 
             scd = datastruct.SCDStruct()
             scd.type = "SCD"
@@ -884,7 +950,7 @@ def getSCDData():
             logStatus("getSCDData No data returned\n")
             if 'internal' in session:
                 rc = scd
-            else:   
+            else:
                 jsonObj = json.dumps(scd.__dict__)
                 rc = jsonObj
         else:
@@ -893,18 +959,18 @@ def getSCDData():
             scd.type = "SCD"
             scd.ts = row[0]
             scd.co2 = row[1]
- 
+
             logStatus("getSCDData Processed Successfully\n")
             if 'internal' in session:
                 rc = scd
-            else:   
+            else:
                 jsonObj = json.dumps(scd.__dict__)
                 rc = jsonObj
 
-        return rc        
+        return rc
 
-    except Exception as e: 
-        logStatus("Exception in getSCDData {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSCDData {}\n".format(e))
         return e
 
     finally:
@@ -913,17 +979,17 @@ def getSCDData():
 
         if conn is not None:
             conn.close()
-            
 
-@app.route('/getSDSData', methods=['GET']) 
+
+@app.route('/getSDSData', methods=['GET'])
 def getSDSData():
-    """ getSDSData - gets latest row"""    
-        
-    global CFG    
+    """ getSDSData - gets latest row"""
+
+    global CFG
     global utility
     conn = None
     cur = None
-    
+
     sql = "SELECT datetime(max(ts), 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt"
 
     try:
@@ -932,9 +998,9 @@ def getSDSData():
         cur.execute(sql)
         row = cur.fetchone()
 
-        if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
+        if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)):
 
-            sd = datastruct.SDS011Struct()
+            sd = datastruct.SDSStruct()
             sd.type = "SDS"
             sd.ts = 9
             sd.pm25 = 9
@@ -945,30 +1011,30 @@ def getSDSData():
             logStatus("getSDSData No data returned\n")
             if 'internal' in session:
                 rc = sd
-            else:   
+            else:
                 jsonObj = json.dumps(sd.__dict__)
                 rc = jsonObj
         else:
 
-            sd = datastruct.SDS011Struct()
+            sd = datastruct.SDSStruct()
             sd.type = "SDS"
             sd.ts = row[0]
             sd.pm25 = row[1]
             sd.pm10 = row[2]
             sd.aqi25 = row[3]
             sd.aqi10 = row[4]
- 
+
             logStatus("getSDSData Processed Successfully\n")
             if 'internal' in session:
                 rc = sd
-            else:   
+            else:
                 jsonObj = json.dumps(sd.__dict__)
                 rc = jsonObj
 
-        return rc        
+        return rc
 
-    except Exception as e: 
-        logStatus("Exception in getSDSData {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSDSData {}\n".format(e))
         return e
 
     finally:
@@ -979,23 +1045,23 @@ def getSDSData():
             conn.close()
 
 
-@app.route('/getSDSDataByDate', methods=['GET']) 
+@app.route('/getSDSDataByDate', methods=['GET'])
 def getSDSDataByDate():
-    """ getSDSDataByDate """    
-        
-    global CFG    
+    """ getSDSDataByDate """
+
+    global CFG
     global utility
     conn = None
     cur = None
     arr = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
 
     start = request.args.get('start')
     end = request.args.get('end')
     args = (start, end)
-    logStatus("getSDSDataByDate: start {} and end {} dates: \n".format(start, end)) 
-    
+    logStatus("getSDSDataByDate: start {} and end {} dates: \n".format(start, end))
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -1005,10 +1071,10 @@ def getSDSDataByDate():
         if (rows):
             for row in rows:
 
-                if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
+                if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)):
 
-                    sd = datastruct.SDS011Struct()
-                    #sd.type = "SDS"
+                    sd = datastruct.SDSStruct()
+
                     sd.ts = 9
                     sd.pm25 = 9
                     sd.pm10 = 9
@@ -1018,34 +1084,34 @@ def getSDSDataByDate():
                     logStatus("getSDSDataByDate No data returned\n")
                     if 'internal' in session:
                         arr.append(sd)
-                    else:   
+                    else:
                         jsonObj = json.dumps(sd.__dict__)
                         arr.append(jsonObj)
 
                 else:
 
-                    sd = datastruct.SDS011Struct()
-                    #sd.type = "SDS"
+                    sd = datastruct.SDSStruct()
+
                     sd.ts = row[0]
                     sd.pm25 = row[1]
                     sd.pm10 = row[2]
                     sd.aqi25 = row[3]
                     sd.aqi10 = row[4]
-        
+
                     logStatus("getSDSDataByDate Processed Successfully\n")
                     if 'internal' in session:
                         arr.append(sd)
-                    else:   
+                    else:
                         jsonObj = json.dumps(sd.__dict__)
                         arr.append(jsonObj)
 
             jsonArr = json.dumps(arr)
-            return jsonArr   
+            return jsonArr
         else:
-             logStatus("getSDSDataByDate No rows returned\n")        
+            logStatus("getSDSDataByDate No rows returned\n")
 
-    except Exception as e: 
-        logStatus("Exception in getSDSDataByDate {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSDSDataByDate {}\n".format(e))
         return e
 
     finally:
@@ -1056,11 +1122,11 @@ def getSDSDataByDate():
             conn.close()
 
 
-@app.route('/getSDSPlotLast24', methods=['GET']) 
+@app.route('/getSDSPlotLast24', methods=['GET'])
 def getSDSPlotLast24():
-    """ getSDSPlotLast24 """    
-        
-    global CFG    
+    """ getSDSPlotLast24 """
+
+    global CFG
     global utility
     conn = None
     cur = None
@@ -1070,14 +1136,13 @@ def getSDSPlotLast24():
     pm10 = []
     aqi25 = []
     aqi10 = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), pm25, pm10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
 
-
     end = datetime.datetime.now()
-    start = end - datetime.timedelta(hours = 24)
+    start = end - datetime.timedelta(hours=24)
     args = (start, end)
-    
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -1086,14 +1151,14 @@ def getSDSPlotLast24():
 
         if (rows):
             for row in rows:
-     
+
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 ts.append(dt)
                 pm25.append(row[1])
                 pm10.append(row[2])
         else:
-                logStatus("getSDSPlotLast24: No rows returned\n")        
-        
+            logStatus("getSDSPlotLast24: No rows returned\n")
+
         plt.title('SDS Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
@@ -1108,8 +1173,8 @@ def getSDSPlotLast24():
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
-    except Exception as e: 
-        logStatus("Exception in getSDSPlotLast24 {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSDSPlotLast24 {}\n".format(e))
         return e
 
     finally:
@@ -1120,11 +1185,11 @@ def getSDSPlotLast24():
             conn.close()
 
 
-@app.route('/getSDSPlotByDate', methods=['GET']) 
+@app.route('/getSDSPlotByDate', methods=['GET'])
 def getSDSPlotByDate():
-    """ getSDSPlotByDate """    
-        
-    global CFG    
+    """ getSDSPlotByDate """
+
+    global CFG
     global utility
     conn = None
     cur = None
@@ -1134,14 +1199,14 @@ def getSDSPlotByDate():
     pm10 = []
     aqi25 = []
     aqi10 = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
 
     start = request.args.get('start')
     end = request.args.get('end')
     args = (start, end)
-    logStatus("getSDSPlotByDate: start {} and end {} dates: \n".format(start, end)) 
-    
+    logStatus("getSDSPlotByDate: start {} and end {} dates: \n".format(start, end))
+
     try:
         conn = utility.getConnection(CFG.database_path)
         cur = conn.cursor()
@@ -1152,7 +1217,7 @@ def getSDSPlotByDate():
 
         if (rows):
             for row in rows:
-     
+
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 logStatus("getSDSPlotByDate: dt is {}\n".format(dt))
                 ts.append(dt)
@@ -1160,7 +1225,7 @@ def getSDSPlotByDate():
                 pm10.append(row[2])
                 # aqi25.append(row[3])
                 # aqi10.append(row[4])
-        
+
         plt.title('SDS Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
@@ -1171,18 +1236,18 @@ def getSDSPlotByDate():
         # plt.plot(ts, aqi10,'y', label='aqi10', linewidth=2)
         plt.legend(loc="best")
         plt.xticks(rotation=90)
-        #plt.grid(False,color='k')
-        #plt.show()
+        # plt.grid(False,color='k')
+        # plt.show()
 
         bytes_image = io.BytesIO()
         plt.savefig(bytes_image, format='png')
         bytes_image.seek(0)
-        #plt.savefig('/home/pi/flask/plot.png')
+        # plt.savefig('/home/pi/flask/plot.png')
         plt.close()
         return send_file(bytes_image, mimetype='image/png')
 
-    except Exception as e: 
-        logStatus("Exception in getSDSPlotByDate {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSDSPlotByDate {}\n".format(e))
         return e
 
     finally:
@@ -1193,16 +1258,16 @@ def getSDSPlotByDate():
             conn.close()
 
 
-@app.route('/getSDSXData/<rowcnt>', methods=['GET']) 
+@app.route('/getSDSXData/<rowcnt>', methods=['GET'])
 def getSDSXData(rowcnt):
-    """ getSDSXData """    
-        
-    global CFG    
+    """ getSDSXData """
+
+    global CFG
     global utility
     conn = None
     cur = None
     arr = []
-    
+
     sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt order by ts asc LIMIT ?"
 
     try:
@@ -1216,10 +1281,10 @@ def getSDSXData(rowcnt):
         if (rows):
             for row in rows:
 
-                if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)): 
+                if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None)):
 
-                    sd = datastruct.SDS011Struct()
-                    sd.type = "SDS"
+                    sd = datastruct.SDSStruct()
+
                     sd.ts = 9
                     sd.pm25 = 9
                     sd.pm10 = 9
@@ -1229,48 +1294,52 @@ def getSDSXData(rowcnt):
                     logStatus("getSDSXData No data returned\n")
                     if 'internal' in session:
                         arr.append(sd)
-                    else:   
+                    else:
                         jsonObj = json.dumps(sd.__dict__)
                         arr.append(jsonObj)
 
                 else:
 
-                    sd = datastruct.SDS011Struct()
-                    sd.type = "SDS"
+                    sd = datastruct.SDSStruct()
+
                     sd.ts = row[0]
                     sd.pm25 = row[1]
                     sd.pm10 = row[2]
                     sd.aqi25 = row[3]
                     sd.aqi10 = row[4]
-        
+
                     logStatus("getSDSXData Processed Successfully\n")
                     if 'internal' in session:
                         arr.append(sd)
-                    else:   
+                    else:
                         jsonObj = json.dumps(sd.__dict__)
                         arr.append(jsonObj)
 
             logStatus("getSDSXData: arr is {}\n".format(arr))
             jsonArr = json.dumps(arr)
             logStatus("getSDSXData: jsonArr is {}\n".format(jsonArr))
-            return jsonArr   
+            return jsonArr
         else:
-             logStatus("getSDSXData No rows returned\n")   
+            logStatus("getSDSXData No rows returned\n")
 
-    except Exception as e: 
-        logStatus("Exception in getSDSXData {}\n".format(e)) 
+    except Exception as e:
+        logStatus("Exception in getSDSXData {}\n".format(e))
         return e
 
     finally:
 
         if cur is not None:
-           cur.close()
+            cur.close()
 
         if conn is not None:
             conn.close()
 
 
-#***************************************** SDS/SGP/SCD Sensor code above *************************************************************************
+# ***************************************** SDS/SGP/SCD Sensor code above *************************************************************************
+
+
+
+
 
 try:
     # logStatus("In main initstuff...\n")
@@ -1290,5 +1359,3 @@ except Exception as e:
 if __name__ == '__main__':
 
     socketio.run(host="192.168.1.74", port=5000, threaded=False, debug=True)
-
-    

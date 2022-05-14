@@ -7,6 +7,17 @@
 # Created Date    : Mon January 26 2020
 # Usage           : /home/pi/flask/flaskservice.sh
 # Python          : 3.9.2
+# http://192.168.1.74:5000/getSCDData
+# http://192.168.1.74:5000/getSCDPlotByDate
+# http://192.168.1.74:5000/getSCDPlotLast24
+# http://192.168.1.74:5000/getSGPData   good
+# http://192.168.1.74:5000/getSGPBase   good
+# http://192.168.1.74:5000/getSGPPlotLast24
+# missing getSGPPlotByDate
+# http://192.168.1.74:5000/getSDSPlotByDate
+# http://192.168.1.74:5000/getSDSXData
+# http://192.168.1.74:5000/getSDSData
+# http://192.168.1.74:5000/getSDSPlotLast24
 # =============================================================================
 import socket
 import datetime
@@ -110,7 +121,23 @@ def sendPush():
     global utility
 
     utility.pushErrorMsg()
+
     
+@app.route('/sendSMS', methods=['GET'])
+def sendSMS():
+    """sendSMS """
+
+    global CFG
+    global utility
+
+
+    msg = request.args.get('msg')
+
+    datestr = datetime.now()
+    msgstr = msg + ' ' + datestr.strftime("%m/%d/%Y, %H:%M:%S") + '\n'
+
+    utility.smssend(msg, msgstr, False, CFG)
+
 
 @app.route('/registerDeviceToken', methods=['GET'])
 def registerDeviceToken():
@@ -435,7 +462,7 @@ def index():
     session.pop('internal', None)
     return render_template('index.html', ds=ds, ts=ts, ws=ws)
 
-# ***************************************** SDS/SGP/SCD Sensor code below *************************************************************************
+# ***************************************** SDS/SGP/SCD Insert code below *************************************************************************
 
 
 @app.route('/insertSDSValues', methods=['POST'])
@@ -566,7 +593,9 @@ def insertSGP():
         if conn is not None:
             conn.close()
 
+# ***************************************** SDS/SGP/SCD Insert code above *************************************************************************
 
+# ***************************************** SGP code above *************************************************************************
 @app.route('/getSGPData', methods=['GET'])
 def getSGPData():
     """getSGPData """
@@ -681,123 +710,6 @@ def getSGPBase():
             conn.close()
 
 
-@app.route('/getSCDPlotByDate', methods=['GET'])
-def getSCDPlotByDate():
-    """ getSCDPlotByDate """
-
-    global CFG
-    global utility
-    conn = None
-    cur = None
-    ts = []
-    co2 = []
-
-    sql = "SELECT datetime(ts, 'localtime'), co2 FROM scd where ts >= ? and ts <= ? order by ts asc"
-
-    start = request.args.get('start')
-    end = request.args.get('end')
-    args = (start, end)
-    logStatus("getSCDPlotByDate start: {} end: {}\n".format(start, end))
-
-    try:
-        conn = utility.getConnection(CFG.database_path)
-        cur = conn.cursor()
-        cur.execute(sql, args)
-        rows = cur.fetchall()
-
-        if (rows):
-            for row in rows:
-
-                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
-                ts.append(dt)
-                co2.append(row[1])
-
-        plt.title('SCD Data')
-        plt.ylabel('Y axis')
-        plt.xlabel('X axis')
-
-        plt.plot(ts, co2, 'b', label='co2', linewidth=2)
-
-        plt.legend(loc="best")
-        plt.xticks(rotation=90)
-
-        bytes_image = io.BytesIO()
-        plt.savefig(bytes_image, format='png')
-        bytes_image.seek(0)
-        plt.close()
-        return send_file(bytes_image, mimetype='image/png')
-
-    except Exception as e:
-        logStatus("Exception in getSCDPlotByDate {}\n".format(e))
-        return e
-
-    finally:
-        if cur is not None:
-            cur.close()
-
-        if conn is not None:
-            conn.close()
-
-
-@app.route('/getSCDPlotLast24', methods=['GET'])
-def getSCDPlotLast24():
-    """ getSCDPlotLast24 """
-
-    global CFG
-    global utility
-    conn = None
-    cur = None
-    ts = []
-    co2 = []
-
-    sql = "SELECT datetime(ts, 'localtime'), co2 FROM scd where ts >= ? and ts <= ? order by ts asc"
-
-    end = datetime.datetime.now()
-    start = end - datetime.timedelta(hours=24)
-
-    logStatus("getSCDPlotLast24 start: {} end: {}\n".format(start, end))
-    args = (start, end)
-
-    try:
-        conn = utility.getConnection(CFG.database_path)
-        cur = conn.cursor()
-        cur.execute(sql, args)
-        rows = cur.fetchall()
-
-        if (rows):
-            for row in rows:
-
-                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
-                ts.append(dt)
-                co2.append(row[1])
-
-        plt.title('SCD Data')
-        plt.ylabel('Y axis')
-        plt.xlabel('X axis')
-
-        plt.plot(ts, co2, 'b', label='co2', linewidth=2)
-
-        plt.legend(loc="best")
-        plt.xticks(rotation=90)
-
-        bytes_image = io.BytesIO()
-        plt.savefig(bytes_image, format='png')
-        bytes_image.seek(0)
-        plt.close()
-        return send_file(bytes_image, mimetype='image/png')
-
-    except Exception as e:
-        logStatus("Exception in getSGPPlotLast24 {}\n".format(e))
-        return e
-
-    finally:
-        if cur is not None:
-            cur.close()
-
-        if conn is not None:
-            conn.close()
-
-
 @app.route('/getSGPPlotLast24', methods=['GET'])
 def getSGPPlotLast24():
     """ getSGPPlotLast24 """
@@ -831,6 +743,11 @@ def getSGPPlotLast24():
                 dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
                 ts.append(dt)
                 tvoc.append(row[1])
+
+        else:
+               logStatus("getSGPPlotLast24: No rows returned\n")   
+               return "getSGPPlotLast24: No rows returned"  
+                
 
         plt.title('SGP Data')
         plt.ylabel('Y axis')
@@ -894,6 +811,10 @@ def getRawSGPPlotLast24():
                 rawh2.append(row[1])
                 raweth.append(row[2])
 
+        else:
+               logStatus("getRawSGPPlotLast24: No rows returned\n")    
+               return "getRawSGPPlotLast24: No rows returned"                
+
         plt.title('Raw SGP Data')
         plt.ylabel('Y axis')
         plt.xlabel('X axis')
@@ -913,6 +834,133 @@ def getRawSGPPlotLast24():
 
     except Exception as e:
         logStatus("Exception in getRawSGPPlotLast24 {}\n".format(e))
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
+# ***************************************** SGP code above *************************************************************************
+
+# ***************************************** SCD code below *************************************************************************
+
+@app.route('/getSCDPlotByDate', methods=['GET'])
+def getSCDPlotByDate():
+    """ getSCDPlotByDate """
+
+    global CFG
+    global utility
+    conn = None
+    cur = None
+    ts = []
+    co2 = []
+
+    sql = "SELECT datetime(ts, 'localtime'), co2 FROM scd where ts >= ? and ts <= ? order by ts asc"
+
+    start = request.args.get('start')
+    end = request.args.get('end')
+    args = (start, end)
+    logStatus("getSCDPlotByDate start: {} end: {}\n".format(start, end))
+
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        if (rows):
+            for row in rows:
+
+                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+                ts.append(dt)
+                co2.append(row[1])
+
+        else:
+               logStatus("getSCDPlotByDate: No rows returned\n")
+               return "getSCDPlotByDate: No rows returned"
+
+        plt.title('SCD Data')
+        plt.ylabel('Y axis')
+        plt.xlabel('X axis')
+
+        plt.plot(ts, co2, 'b', label='co2', linewidth=2)
+
+        plt.legend(loc="best")
+        plt.xticks(rotation=90)
+
+        bytes_image = io.BytesIO()
+        plt.savefig(bytes_image, format='png')
+        bytes_image.seek(0)
+        plt.close()
+        return send_file(bytes_image, mimetype='image/png')
+
+    except Exception as e:
+        logStatus("Exception in getSCDPlotByDate {}\n".format(e))
+        return e
+
+    finally:
+        if cur is not None:
+            cur.close()
+
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/getSCDPlotLast24', methods=['GET'])
+def getSCDPlotLast24():
+    """ getSCDPlotLast24 """
+
+    global CFG
+    global utility
+    conn = None
+    cur = None
+    ts = []
+    co2 = []
+
+    sql = "SELECT datetime(ts, 'localtime'), co2 FROM scd where ts >= ? and ts <= ? order by ts asc"
+
+    end = datetime.datetime.now()
+    start = end - datetime.timedelta(hours=24)
+
+    logStatus("getSCDPlotLast24 start: {} end: {}\n".format(start, end))
+    args = (start, end)
+
+    try:
+        conn = utility.getConnection(CFG.database_path)
+        cur = conn.cursor()
+        cur.execute(sql, args)
+        rows = cur.fetchall()
+
+        if (rows):
+            for row in rows:
+
+                dt = datetime.datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+                ts.append(dt)
+                co2.append(row[1])
+        else:
+               logStatus("getSCDPlotLast24: No rows returned\n") 
+               return "getSCDPlotLast24: No rows returned"               
+
+        plt.title('SCD Data')
+        plt.ylabel('Y axis')
+        plt.xlabel('X axis')
+
+        plt.plot(ts, co2, 'b', label='co2', linewidth=2)
+
+        plt.legend(loc="best")
+        plt.xticks(rotation=90)
+
+        bytes_image = io.BytesIO()
+        plt.savefig(bytes_image, format='png')
+        bytes_image.seek(0)
+        plt.close()
+        return send_file(bytes_image, mimetype='image/png')
+
+    except Exception as e:
+        logStatus("Exception in getSGPPlotLast24 {}\n".format(e))
         return e
 
     finally:
@@ -980,6 +1028,9 @@ def getSCDData():
         if conn is not None:
             conn.close()
 
+# ***************************************** SCD code above *************************************************************************
+
+# ***************************************** SDS code below *************************************************************************
 
 @app.route('/getSDSData', methods=['GET'])
 def getSDSData():
@@ -1158,6 +1209,7 @@ def getSDSPlotLast24():
                 pm10.append(row[2])
         else:
             logStatus("getSDSPlotLast24: No rows returned\n")
+            return "getSDSPlotLast24: No rows returned"
 
         plt.title('SDS Data')
         plt.ylabel('Y axis')
@@ -1223,8 +1275,9 @@ def getSDSPlotByDate():
                 ts.append(dt)
                 pm25.append(row[1])
                 pm10.append(row[2])
-                # aqi25.append(row[3])
-                # aqi10.append(row[4])
+        else:
+               logStatus("getSDSPlotByDate: No rows returned\n")  
+               return "getSDSPlotByDate: No rows returned"
 
         plt.title('SDS Data')
         plt.ylabel('Y axis')
@@ -1334,11 +1387,7 @@ def getSDSXData(rowcnt):
         if conn is not None:
             conn.close()
 
-
-# ***************************************** SDS/SGP/SCD Sensor code above *************************************************************************
-
-
-
+# ***************************************** SDS code above *************************************************************************
 
 
 try:

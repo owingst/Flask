@@ -5,7 +5,7 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-05-11 16:05:08
+ * Last modified  : 2022-05-14 16:36:25
  */
 
 function fetchDscData() {
@@ -44,6 +44,7 @@ function fetchWeatherData() {
       document.getElementById("outdoorWindspeed").innerHTML = text['avewindspeed'];
       document.getElementById("outdoorWindGustspeed").innerHTML = text['gustwindspeed'];
       document.getElementById("outdoorRain").innerHTML = text['cumulativerain'];
+      document.getElementById("rainToday").innerHTML = '--';
       document.getElementById("outdoorWinddirection").innerHTML = text['winddirection'];
       document.getElementById("outdoorLight").innerHTML = text['light'];
       document.getElementById("outdoorUV").innerHTML = text['uv'];
@@ -174,6 +175,7 @@ $(document).ready(function () {
       document.getElementById("outdoorWindGustspeed").innerHTML = ws.gustwindspeed;
       document.getElementById("outdoorWinddirection").innerHTML = ws.winddirection;
       document.getElementById("outdoorRain").innerHTML = ws.cumulativerain;
+      document.getElementById("rainToday").innerHTML = ws.raintoday;
       document.getElementById("outdoorLight").innerHTML = ws.light;
       document.getElementById("outdoorUV").innerHTML = ws.uv;
       document.getElementById("outdoorBattery").innerHTML = (ws.battery === 1) ? "<span style='color: red;'>Low</span>" : "<span style='color: green;'>OK</span>";

@@ -238,6 +238,7 @@ def getWeathersenseData():
             ws.gustwindspeed = 1000
             ws.winddirection = 1000
             ws.cumulativerain = 1000
+            ws.rainToday = 1000
             ws.light = 1000
             ws.uv = 1000
             ws.battery = 9
@@ -255,6 +256,7 @@ def getWeathersenseData():
             ws.gustwindspeed = row[4]
             ws.winddirection = row[5]
             ws.cumulativerain = row[6]
+            ws.rainToday = 1000
             ws.light = row[7]
             ws.uv = row[8]
             ws.battery = row[9]
@@ -419,10 +421,12 @@ def getRainfall():
         if row:
             rc = row[0]
             jsonObj = json.dumps({'rainfall': rc})
+            logStatus("returning rainfall {}\n".format(rc))
         else:
             rc = "getRainfall failed"
+            logStatus("getRainfall failed {}\n".format(rc))
 
-        logStatus("returning rainfall {}\n".format(rc))
+        
         return jsonObj
 
     except Exception as e:

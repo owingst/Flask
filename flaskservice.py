@@ -544,8 +544,10 @@ def insertSCD():
     try:
 
         co2 = request.args.get('co2')
-        logStatus("insertSCD: co2: {}\n".format(co2))
-        sql = "INSERT INTO scd(co2) VALUES (?)"
+        temp = request.args.get('temp')
+        hum = request.args.get('hum')
+        logStatus("insertSCD: co2: {} temp: {} hum: {}\n".format(co2, temp, hum))
+        sql = "INSERT INTO scd(co2, temp, hum) VALUES (?, ?, ?)"
         conn = utility.getConnection(CFG.database_path)
         conn.execute(sql, [co2])
 

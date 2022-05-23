@@ -469,9 +469,9 @@ def index():
 # ***************************************** SDS/SGP/SCD Insert code below *************************************************************************
 
 
-@app.route('/insertSDSValues', methods=['POST'])
-def insertSDSValues():
-    """insertSDSValues """
+@app.route('/insertSDS', methods=['POST'])
+def insertSDS():
+    """insertSDS """
 
     conn = None
     global CFG
@@ -482,19 +482,21 @@ def insertSDSValues():
         pm25 = request.args.get('pm25')
         aqi10 = request.args.get('aqi10')
         aqi25 = request.args.get('aqi25')
-        logStatus("insertSDSValues: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
+        
         args = (pm25, pm10, aqi25, aqi10)
-        sql = "INSERT INTO pmt(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
+        sql = "INSERT INTO sds(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
         conn = utility.getConnection(CFG.database_path)
         conn.execute(sql, args)
 
         conn.commit()
 
+        logStatus("insertSDS: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
+
         return "OK"
 
     except Exception as e:
-        logStatus("Exception in insertSDSValues {}\n".format(e))
-        return "insertSDSValues Failed!"
+        logStatus("Exception in insertSDS {}\n".format(e))
+        return "insertSDS Failed!"
 
     finally:
         if conn is not None:
@@ -1046,7 +1048,7 @@ def getSDSData():
     conn = None
     cur = None
 
-    sql = "SELECT datetime(max(ts), 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt"
+    sql = "SELECT datetime(max(ts), 'localtime'), pm25, pm10, aqi25, aqi10 FROM sds"
 
     try:
         conn = utility.getConnection(CFG.database_path)
@@ -1111,7 +1113,7 @@ def getSDSDataByDate():
     cur = None
     arr = []
 
-    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM sds where ts >= ? and ts <= ? order by ts asc"
 
     start = request.args.get('start')
     end = request.args.get('end')
@@ -1193,7 +1195,7 @@ def getSDSPlotLast24():
     aqi25 = []
     aqi10 = []
 
-    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10 FROM sds where ts >= ? and ts <= ? order by ts asc"
 
     end = datetime.datetime.now()
     start = end - datetime.timedelta(hours=24)
@@ -1257,7 +1259,7 @@ def getSDSPlotByDate():
     aqi25 = []
     aqi10 = []
 
-    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt where ts >= ? and ts <= ? order by ts asc"
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM sds where ts >= ? and ts <= ? order by ts asc"
 
     start = request.args.get('start')
     end = request.args.get('end')
@@ -1326,7 +1328,7 @@ def getSDSXData(rowcnt):
     cur = None
     arr = []
 
-    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM pmt order by ts asc LIMIT ?"
+    sql = "SELECT datetime(ts, 'localtime'), pm25, pm10, aqi25, aqi10 FROM sds order by ts asc LIMIT ?"
 
     try:
 

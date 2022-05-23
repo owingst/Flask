@@ -549,7 +549,8 @@ def insertSCD():
         logStatus("insertSCD: co2: {} temp: {} hum: {}\n".format(co2, temp, hum))
         sql = "INSERT INTO scd(co2, temp, hum) VALUES (?, ?, ?)"
         conn = utility.getConnection(CFG.database_path)
-        conn.execute(sql, [co2])
+        args = (co2, temp, hum)
+        conn.execute(sql, args)
 
         conn.commit()
 
@@ -579,8 +580,7 @@ def insertSGP():
         rawh2 = request.args.get('rawh2')
         raweth = request.args.get('raweth')
 
-        logStatus("insertSGP: eco2 {} tvoc {} rawh2 {} raweth {}\n".format(
-            eco2, tvoc, rawh2, raweth))
+        logStatus("insertSGP: eco2 {} tvoc {} rawh2 {} raweth {}\n".format(eco2, tvoc, rawh2, raweth))
         args = (eco2, tvoc, rawh2, raweth)
 
         sql = "INSERT INTO sgp(eco2, tvoc, rawh2, raweth) VALUES (?, ?, ?, ?)"

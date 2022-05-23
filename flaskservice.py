@@ -482,8 +482,7 @@ def insertSDSValues():
         pm25 = request.args.get('pm25')
         aqi10 = request.args.get('aqi10')
         aqi25 = request.args.get('aqi25')
-        logStatus("insertSDSValues: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(
-            pm25, pm10, aqi25, aqi10))
+        logStatus("insertSDSValues: pm25 {} pm10 {} aqi25 {} aqi10 {}\n".format(pm25, pm10, aqi25, aqi10))
         args = (pm25, pm10, aqi25, aqi10)
         sql = "INSERT INTO pmt(pm25, pm10, aqi25, aqi10) VALUES (?, ?, ?, ?)"
         conn = utility.getConnection(CFG.database_path)

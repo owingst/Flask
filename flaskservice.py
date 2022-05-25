@@ -212,15 +212,15 @@ def moveDoor():
         logStatus("Exception in moveDoor {}\n".format(e))
 
 
-@app.route('/getWeathersenseData', methods=['GET'])
-def getWeathersenseData():
-    """ getWeathersenseData """
+@app.route('/getWeatherData', methods=['GET'])
+def getWeatherData():
+    """ getWeatherData """
 
     global CFG
     global utility
     conn = None
     cur = None
-    sql = "SELECT datetime(MAX(ts), 'localtime'), temperature, humidity, windspeed, gust, winddirection, cumulativerain, light, uv, battery FROM weathersense"
+    sql = "SELECT datetime(MAX(ts), 'localtime'), temperature, humidity, windspeed, gust, winddirection, cumulativerain, light, uv, battery FROM weather"
 
     try:
 
@@ -228,6 +228,8 @@ def getWeathersenseData():
         cur = conn.cursor()
         cur.execute(sql)
         row = cur.fetchone()
+
+        logStatus("getWeatherData: row is {}\n".format(row))
 
         ws = datastruct.WeatherStruct()
         if ((row[1] is None) or (row[2] is None) or (row[3] is None) or (row[4] is None) or (row[5] is None) or (row[6] is None) or (row[7] is None) or (row[8] is None) or (row[9] is None)):
@@ -238,7 +240,6 @@ def getWeathersenseData():
             ws.gustwindspeed = 1000
             ws.winddirection = 1000
             ws.cumulativerain = 1000
-            ws.rainToday = 1000
             ws.light = 1000
             ws.uv = 1000
             ws.battery = 9
@@ -256,10 +257,10 @@ def getWeathersenseData():
             ws.gustwindspeed = row[4]
             ws.winddirection = row[5]
             ws.cumulativerain = row[6]
-            ws.rainToday = 1000
             ws.light = row[7]
             ws.uv = row[8]
             ws.battery = row[9]
+
             if 'internal' in session:
                 rc = ws
             else:
@@ -269,7 +270,7 @@ def getWeathersenseData():
         return rc
 
     except Exception as e:
-        logStatus("Exception in getData {}\n".format(e))
+        logStatus("Exception in getWeatherData {}\n".format(e))
         return e
 
     finally:
@@ -405,12 +406,12 @@ def getRainfall():
     conn = None
     cur = None
 
-    sql = "select max(cumulativerain) - min(cumulativerain) as difference FROM weathersense where ts >= ? and ts <= ?"
+    sql = "select max(cumulativerain) - min(cumulativerain) as difference FROM weather where ts >= ? and ts <= ?"
 
     start = datetime.datetime.now().strftime("%Y-%m-%d 00:00:00")
     end = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     args = (start, end)
-    logStatus("getRainfall: start {} and end {} dates: \n".format(start, end))
+    #logStatus("getRainfall: start {} and end {} dates: \n".format(start, end))
 
     try:
         conn = utility.getConnection(CFG.database_path)
@@ -421,7 +422,8 @@ def getRainfall():
         if row:
             rc = row[0]
             jsonObj = json.dumps({'rainfall': rc})
-            logStatus("returning rainfall {}\n".format(rc))
+            logStatus("getRainfall rainfall is {}\n".format(rc))
+
         else:
             rc = "getRainfall failed"
             logStatus("getRainfall failed {}\n".format(rc))
@@ -462,7 +464,7 @@ def index():
     session['internal'] = 1
     ds = getDscData()
     ts = getF007thData()
-    ws = getWeathersenseData()
+    ws = getWeatherData()
     session.pop('internal', None)
     return render_template('index.html', ds=ds, ts=ts, ws=ws)
 

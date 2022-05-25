@@ -5,7 +5,7 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-05-14 16:36:25
+ * Last modified  : 2022-05-24 11:14:29
  */
 
 function fetchDscData() {
@@ -30,7 +30,7 @@ function fetchF007Data() {
 }
 
 function fetchWeatherData() {
-  fetch("http://192.168.1.74:5000/getWeathersenseData")
+  fetch("http://192.168.1.74:5000/getWeatherData")
   .then(function (response) {
       return response.json();
   }).then(function (text) {
@@ -44,7 +44,7 @@ function fetchWeatherData() {
       document.getElementById("outdoorWindspeed").innerHTML = text['avewindspeed'];
       document.getElementById("outdoorWindGustspeed").innerHTML = text['gustwindspeed'];
       document.getElementById("outdoorRain").innerHTML = text['cumulativerain'];
-      document.getElementById("rainToday").innerHTML = '--';
+      document.getElementById("rainToday").innerHTML = text['raintoday'];
       document.getElementById("outdoorWinddirection").innerHTML = text['winddirection'];
       document.getElementById("outdoorLight").innerHTML = text['light'];
       document.getElementById("outdoorUV").innerHTML = text['uv'];

@@ -5,7 +5,7 @@
  * @author Tim Owings
  *
  * Created at     : 2022-01-18 15:00:31 
- * Last modified  : 2022-05-24 11:14:29
+ * Last modified  : 2022-05-28 11:08:47
  */
 
 function fetchDscData() {
@@ -93,7 +93,7 @@ function fetchSDSData() {
   .then(function (response) {
       return response.json();
   }).then(function (text) {
-
+    console.log("getSDSData: ", text);
     document.getElementById("pm25").innerHTML = text['pm25'];
     document.getElementById("pm10").innerHTML = text['pm10'];
     document.getElementById("aqi25").innerHTML = text['aqi25'];
@@ -142,6 +142,7 @@ $(document).ready(function () {
 
     } else if (msg.type == "SDS") {
       sd = msg;
+      console.log("SDS msg arrived: ", msg);
       document.getElementById("pm25").innerHTML = sd.pm25;
       document.getElementById("pm10").innerHTML = sd.pm10;
       document.getElementById("aqi25").innerHTML = sd.aqi25;
@@ -151,7 +152,7 @@ $(document).ready(function () {
       sgp = msg
       document.getElementById("tvoc").innerHTML = sgp.tvoc;
       document.getElementById("rawh2").innerHTML = sgp.rawh2;
-      document.getElementById("aqi25").innerHTML = sgp.aqi25;
+      document.getElementById("raweth").innerHTML = sgp.raweth;
 
     } else if (msg.type == "SCD") { 
       scd = msg

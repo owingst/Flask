@@ -411,7 +411,6 @@ def getRainfall():
     start = datetime.datetime.now().strftime("%Y-%m-%d 00:00:00")
     end = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     args = (start, end)
-    #logStatus("getRainfall: start {} and end {} dates: \n".format(start, end))
 
     try:
         conn = utility.getConnection(CFG.database_path)
@@ -421,8 +420,7 @@ def getRainfall():
 
         if row:
             rc = row[0]
-            jsonObj = json.dumps({'rainfall': rc})
-            logStatus("getRainfall rainfall is {}\n".format(rc))
+            jsonObj = json.dumps({'rainfall': round(rc)})
 
         else:
             rc = "getRainfall failed"

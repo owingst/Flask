@@ -411,6 +411,7 @@ def getRainfall():
     start = datetime.datetime.now().strftime("%Y-%m-%d 00:00:00")
     end = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     args = (start, end)
+    logStatus("start is {} end is {}\n".format(start, end))
 
     try:
         conn = utility.getConnection(CFG.database_path)
